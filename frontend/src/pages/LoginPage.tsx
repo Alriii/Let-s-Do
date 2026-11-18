@@ -1,6 +1,7 @@
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import heroLoginImg from '../assets/hero-login.png';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { Field, Input, useFieldId } from '../components/ui/Field';
@@ -74,10 +75,11 @@ export function LoginPage() {
         </>
       }
       heroDescription="Stay organized, focused, and get more done every day. Let's Do! provides a calm, streamlined dashboard to organize your schedule and focus areas."
+      heroImageSrc={heroLoginImg}
     >
       <div>
-        <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Log In</h1>
-        <p className="mt-1.5 text-sm text-muted">
+        <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#111514]">Log In</h1>
+        <p className="mt-1.5 text-sm text-[#6b7280]">
           Welcome back! Enter your details to continue.
         </p>
       </div>
@@ -160,7 +162,7 @@ export function LoginPage() {
         </Button>
       </form>
 
-      <div className="mt-7 border-t border-line pt-5 text-center text-sm text-muted">
+      <div className="mt-7 border-t border-line pt-5 text-center text-sm text-[#6b7280]">
         Don&rsquo;t have an account?{' '}
         <Link to="/signup" className="font-semibold text-brand transition-colors hover:text-brand-deep">
           Sign Up

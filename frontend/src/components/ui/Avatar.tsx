@@ -1,4 +1,6 @@
 import clsx from 'clsx';
+import { useState } from 'react';
+import defaultAvatar from '../../assets/avatar.png';
 import { initials } from '../../lib/format';
 
 interface AvatarProps {
@@ -8,33 +10,36 @@ interface AvatarProps {
   className?: string;
 }
 
-export function Avatar({ name, src, size = 40, className }: AvatarProps) {
+export function Avatar({ name, src, size = 42, className }: AvatarProps) {
+  const [loadFailed, setLoadFailed] = useState(false);
   const dimension = { width: size, height: size };
+  const avatarSrc = src || defaultAvatar;
 
-  if (src) {
+  if (loadFailed) {
     return (
-      <img
-        src={src}
-        alt={name}
-        style={dimension}
+      <span
+        style={{ ...dimension, fontSize: Math.max(11, size * 0.36) }}
         className={clsx(
-          'shrink-0 rounded-full border border-line object-cover',
+          'grid shrink-0 place-items-center rounded-full border border-brand/35 bg-brand-soft font-bold uppercase tracking-wide text-brand-strong',
           className,
         )}
-      />
+        aria-hidden
+      >
+        {initials(name) || 'U'}
+      </span>
     );
   }
 
   return (
-    <span
-      style={{ ...dimension, fontSize: Math.max(11, size * 0.36) }}
+    <img
+      src={avatarSrc}
+      alt={name}
+      style={dimension}
+      onError={() => setLoadFailed(true)}
       className={clsx(
-        'grid shrink-0 place-items-center rounded-full border border-brand/35 bg-brand-soft font-bold uppercase tracking-wide text-brand-strong',
+        'shrink-0 rounded-full border border-[#eaeeeb] object-cover shadow-sm',
         className,
       )}
-      aria-hidden
-    >
-      {initials(name) || 'U'}
-    </span>
+    />
   );
 }

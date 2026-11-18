@@ -1,6 +1,7 @@
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import heroSignupImg from '../assets/hero-signup.png';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { Field, Input, useFieldId } from '../components/ui/Field';
@@ -56,7 +57,6 @@ export function SignupPage() {
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       setError(nextErrors.email ?? nextErrors.password ?? nextErrors.password_confirmation ?? null);
-
       return;
     }
 
@@ -95,12 +95,13 @@ export function SignupPage() {
         </>
       }
       heroDescription="Set up your workspace in seconds. Build organized daily habits and track your progress with calm, focused clarity."
+      heroImageSrc={heroSignupImg}
       backTo="/login"
       backLabel="Back to Log In"
     >
       <div>
-        <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Sign Up</h1>
-        <p className="mt-1.5 text-sm text-muted">
+        <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#111514]">Sign Up</h1>
+        <p className="mt-1.5 text-sm text-[#6b7280]">
           Create an account to start managing your daily tasks.
         </p>
       </div>
@@ -214,7 +215,7 @@ export function SignupPage() {
         </Button>
       </form>
 
-      <div className="mt-7 border-t border-line pt-5 text-center text-sm text-muted">
+      <div className="mt-7 border-t border-line pt-5 text-center text-sm text-[#6b7280]">
         Already have an account?{' '}
         <Link to="/login" className="font-semibold text-brand transition-colors hover:text-brand-deep">
           Log In

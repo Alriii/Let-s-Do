@@ -1,6 +1,8 @@
-import { KeyRound, MailCheck } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import badgeEnvelopeImg from '../assets/badge-envelope.png';
+import heroSignupImg from '../assets/hero-signup.png';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { Field, Input, useFieldId } from '../components/ui/Field';
@@ -53,7 +55,7 @@ export function VerifyEmailPage() {
 
     try {
       await api.post('/auth/email/verify', { email: email.trim(), code });
-      toast.success('Email verified. You can log in now.');
+      toast.success('Email verified! You can log in now.');
       navigate('/login?verified=1', { replace: true });
     } catch (caught) {
       if (caught instanceof ApiError) {
@@ -81,7 +83,7 @@ export function VerifyEmailPage() {
 
     try {
       await api.post('/auth/email/resend', { email: email.trim() });
-      toast.success('A fresh verification code is on its way.');
+      toast.success('A fresh verification code has been sent.');
       setCooldown(30);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Unable to resend the code.');
@@ -100,20 +102,24 @@ export function VerifyEmailPage() {
         </>
       }
       heroDescription="Enter the 6-digit verification code we emailed you to activate your account. Codes expire after 15 minutes."
+      heroImageSrc={heroSignupImg}
       backTo="/login"
       backLabel="Back to Log In"
     >
-      <div className="flex items-start gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-tint text-brand-strong">
-          <MailCheck className="h-5 w-5" aria-hidden />
-        </span>
-        <div>
-          <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Verify Your Email</h1>
-          <p className="mt-1.5 text-sm text-muted">
-            A 6-digit verification code has been sent to your email. Please check your inbox to
-            proceed.
-          </p>
-        </div>
+      <div className="flex flex-col items-center text-center">
+        <img
+          src={badgeEnvelopeImg}
+          alt="Verification Code Sent"
+          className="h-[72px] w-[72px] object-contain drop-shadow-md"
+        />
+        <h1 className="mt-4 text-[24px] font-bold tracking-[-0.02em] text-[#111514] sm:text-[26px]">
+          Verification Code Sent
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-[#6b7280]">
+          A 6-digit verification code has been sent to your email.
+          <br />
+          Please check your inbox to proceed.
+        </p>
       </div>
 
       {error && (
@@ -144,7 +150,7 @@ export function VerifyEmailPage() {
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="Enter 6-digit code"
-            className="h-[52px] text-center text-xl font-bold tracking-[0.5em]"
+            className="h-[52px] text-center text-xl font-bold tracking-[0.4em]"
             invalid={Boolean(fieldErrors.code)}
             required
           />
@@ -156,6 +162,7 @@ export function VerifyEmailPage() {
           fullWidth
           loading={loading}
           icon={<KeyRound className="h-4 w-4" aria-hidden />}
+          className="mt-1"
         >
           Verify Email
         </Button>

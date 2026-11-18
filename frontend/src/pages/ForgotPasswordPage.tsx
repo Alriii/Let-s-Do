@@ -1,6 +1,10 @@
-import { ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, KeyRound } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import badgeSecurityImg from '../assets/badge-security.png';
+import heroForgot1Img from '../assets/hero-forgot-1.png';
+import heroForgot2Img from '../assets/hero-forgot-2.png';
+import heroForgotSuccessImg from '../assets/hero-forgot-success.png';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { Field, Input, useFieldId } from '../components/ui/Field';
@@ -163,24 +167,36 @@ export function ForgotPasswordPage() {
 
   const heroDescription =
     step === 'done'
-      ? 'Your password has been changed successfully. You can now use your new credentials to log in.'
+      ? 'Your account password has been safely updated. Sign in to return to your tasks and daily schedule.'
       : step === 'reset'
-        ? 'Choose a strong, unique password to keep your tasks and workspace secure.'
-        : "Enter your registered email address and we'll send a 6-digit verification code to reset your password safely.";
+        ? 'Enter the 6-digit code sent to your email along with your new password to restore access.'
+        : "Forgot your password? No worries. Enter your registered email address and we'll send a 6-digit recovery code.";
+
+  const heroImageSrc =
+    step === 'done'
+      ? heroForgotSuccessImg
+      : step === 'reset'
+        ? heroForgot2Img
+        : heroForgot1Img;
 
   return (
     <AuthLayout
       heroTitle={heroTitle}
       heroDescription={heroDescription}
+      heroImageSrc={heroImageSrc}
       backTo="/login"
       backLabel="Back to Log In"
     >
       {step === 'request' && (
         <>
-          <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Forgot Password</h1>
-          <p className="mt-1.5 text-sm text-muted">
-            Enter your email to receive a verification code.
-          </p>
+          <div>
+            <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#111514]">
+              Forgot Password
+            </h1>
+            <p className="mt-1.5 text-sm text-[#6b7280]">
+              Enter your registered email address to receive a recovery code.
+            </p>
+          </div>
 
           {error && (
             <p className="mt-5 rounded-[10px] border border-danger/25 bg-danger-soft px-3.5 py-2.5 text-[13px] font-medium text-danger">
@@ -189,7 +205,7 @@ export function ForgotPasswordPage() {
           )}
 
           <form onSubmit={requestCode} className="mt-6 flex flex-col gap-4" noValidate>
-            <Field label="Email" htmlFor={emailId} error={fieldErrors.email}>
+            <Field label="Email Address" htmlFor={emailId} error={fieldErrors.email}>
               <Input
                 id={emailId}
                 type="email"
@@ -208,14 +224,15 @@ export function ForgotPasswordPage() {
               fullWidth
               loading={loading}
               icon={<KeyRound className="h-4 w-4" aria-hidden />}
+              className="mt-1"
             >
-              Send Code
+              Send Recovery Code
             </Button>
           </form>
 
-          <div className="mt-7 border-t border-line pt-5 text-center text-sm text-muted">
-            Remember your password?{' '}
-            <Link to="/login" className="font-semibold text-brand hover:text-brand-deep">
+          <div className="mt-7 border-t border-line pt-5 text-center text-sm text-[#6b7280]">
+            Remembered your password?{' '}
+            <Link to="/login" className="font-semibold text-brand transition-colors hover:text-brand-deep">
               Log In
             </Link>
           </div>
@@ -224,11 +241,16 @@ export function ForgotPasswordPage() {
 
       {step === 'reset' && (
         <>
-          <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Reset Password</h1>
-          <p className="mt-1.5 text-sm text-muted">
-            Enter the code sent to <span className="font-medium text-ink">{email}</span> and choose a
-            new password.
-          </p>
+          <div>
+            <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#111514]">
+              Reset Password
+            </h1>
+            <p className="mt-1.5 text-sm text-[#6b7280]">
+              Enter the 6-digit code sent to{' '}
+              <strong className="font-semibold text-[#111514]">{email}</strong> and pick a strong
+              new password.
+            </p>
+          </div>
 
           {error && (
             <p className="mt-5 rounded-[10px] border border-danger/25 bg-danger-soft px-3.5 py-2.5 text-[13px] font-medium text-danger">
@@ -259,7 +281,7 @@ export function ForgotPasswordPage() {
                 placeholder="Enter 6-digit code"
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="h-[52px] text-center text-xl font-bold tracking-[0.5em]"
+                className="h-[52px] text-center text-xl font-bold tracking-[0.4em]"
                 invalid={Boolean(fieldErrors.code)}
                 required
               />
@@ -331,7 +353,7 @@ export function ForgotPasswordPage() {
                 setError(null);
                 setFieldErrors({});
               }}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink"
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6b7280] transition-colors hover:text-[#111514]"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
               Use a different email
@@ -341,21 +363,23 @@ export function ForgotPasswordPage() {
       )}
 
       {step === 'done' && (
-        <div className="flex flex-col items-center py-2 text-center">
-          <span className="grid h-[72px] w-[72px] place-items-center rounded-full bg-brand-tint text-brand-strong">
-            <ShieldCheck className="h-9 w-9" aria-hidden />
-          </span>
-          <h1 className="mt-5 text-[26px] font-bold tracking-[-0.02em] text-ink">
+        <div className="flex flex-col items-center py-4 text-center">
+          <img
+            src={badgeSecurityImg}
+            alt="Security Updated"
+            className="h-[72px] w-[72px] object-contain drop-shadow-md"
+          />
+          <h1 className="mt-5 text-[26px] font-bold tracking-[-0.02em] text-[#111514]">
             Password Changed
           </h1>
-          <p className="mt-2 max-w-[340px] text-sm leading-6 text-muted">
+          <p className="mt-2.5 max-w-[340px] text-sm leading-6 text-[#6b7280]">
             Your password has been reset successfully. You can now sign in using your new password.
           </p>
 
           <Button
             size="lg"
             fullWidth
-            className="mt-6"
+            className="mt-7"
             onClick={() => navigate('/login?reset=1', { replace: true })}
           >
             Log In with New Password
