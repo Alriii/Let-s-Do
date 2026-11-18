@@ -40,15 +40,16 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         // 1. Create user (password automatically hashed by User model casts).
-        // The Figma signup form has no name field, so derive a friendly
-        // display name from the email when one is not supplied.
-        $name = $validated['name']
-            ?? Str::of($validated['email'])
-                ->before('@')
-                ->replace(['.', '_', '-'], ' ')
-                ->title()
-                ->trim()
-                ->toString();
+        $name = trim(($validated['first_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+        if ($name === '') {
+            $name = $validated['name']
+                ?? Str::of($validated['email'])
+                    ->before('@')
+                    ->replace(['.', '_', '-'], ' ')
+                    ->title()
+                    ->trim()
+                    ->toString();
+        }
 
         $user = User::create([
             'name' => $name !== '' ? $name : 'User',

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Camera, Moon, Sun, Trash2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Moon, Sun, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import type { ProfileResponse, Theme, User } from '../../lib/types';
@@ -20,6 +20,13 @@ interface AvatarResponse {
   avatar_url: string | null;
   user: User;
 }
+
+const PASSWORD_RULES = [
+  { label: '8+ characters', test: (value: string) => value.length >= 8 },
+  { label: 'Upper & lowercase', test: (value: string) => /[a-z]/.test(value) && /[A-Z]/.test(value) },
+  { label: 'A number', test: (value: string) => /\d/.test(value) },
+  { label: 'A symbol', test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+];
 
 function Toggle({
   checked,
@@ -63,15 +70,27 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
   const toast = useToast();
   const nameId = useFieldId('pref-name');
   const emailId = useFieldId('pref-email');
+  const currentPassId = useFieldId('pref-curr-pass');
+  const newPassId = useFieldId('pref-new-pass');
+  const confirmPassId = useFieldId('pref-conf-pass');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
   const [theme, setTheme] = useState<Theme>('light');
   const [reminders, setReminders] = useState(true);
   const [digest, setDigest] = useState(true);
+
+  // Password change states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open || !user) {
@@ -82,7 +101,11 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
     setTheme(user.preferences.theme);
     setReminders(user.preferences.task_reminders_enabled);
     setDigest(user.preferences.daily_digest_enabled);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
     setError(null);
+    setFieldErrors({});
   }, [open, user]);
 
   const close = () => {
@@ -90,38 +113,91 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
       return;
     }
 
+    // Revert live preview theme to saved theme if user cancels
+    if (user) {
+      applyTheme(user.preferences.theme);
+    }
     onClose();
   };
 
-  const save = async () => {
-    const trimmed = name.trim();
+  const handleThemeChange = (selectedTheme: Theme) => {
+    setTheme(selectedTheme);
+    applyTheme(selectedTheme);
+  };
 
-    if (!trimmed) {
+  const save = async () => {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
       setError('Please enter your full name.');
       return;
     }
 
-    setSaving(true);
+    setFieldErrors({});
     setError(null);
 
+    // Password validation if user entered anything in password fields
+    if (newPassword || currentPassword || confirmPassword) {
+      if (!currentPassword) {
+        setFieldErrors({ current_password: 'Enter your current password to set a new one.' });
+        return;
+      }
+      if (!newPassword) {
+        setFieldErrors({ new_password: 'Enter your new password.' });
+        return;
+      }
+      const passedRules = PASSWORD_RULES.filter((r) => r.test(newPassword)).length;
+      if (passedRules < PASSWORD_RULES.length) {
+        setFieldErrors({
+          new_password: 'Use 8+ characters with upper & lowercase letters, a number, and a symbol.',
+        });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setFieldErrors({ new_password_confirmation: 'The new passwords do not match.' });
+        return;
+      }
+    }
+
+    setSaving(true);
+
     try {
-      const response = await api.patch<ProfileResponse>('/auth/profile', {
-        name: trimmed,
+      const payload: Record<string, unknown> = {
+        name: trimmedName,
         theme,
         task_reminders_enabled: reminders,
         daily_digest_enabled: digest,
-      });
+      };
+
+      if (newPassword) {
+        payload.current_password = currentPassword;
+        payload.new_password = newPassword;
+        payload.new_password_confirmation = confirmPassword;
+      }
+
+      const response = await api.patch<ProfileResponse>('/auth/profile', payload);
 
       setUser(response.user);
       applyTheme(response.user.preferences.theme);
-      toast.success('Preferences saved.');
+      toast.success(
+        newPassword
+          ? 'Preferences and password updated successfully.'
+          : 'Preferences saved.',
+      );
       onClose();
     } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.firstError('name') ?? caught.message
-          : 'Unable to save your preferences right now.',
-      );
+      if (caught instanceof ApiError) {
+        const next: Record<string, string> = {};
+        for (const [key, messages] of Object.entries(caught.errors)) {
+          if (messages[0]) {
+            next[key] = messages[0];
+          }
+        }
+        setFieldErrors(next);
+        setError(next.current_password ?? next.new_password ?? caught.message);
+      } else {
+        setError('Unable to save your preferences right now.');
+      }
     } finally {
       setSaving(false);
     }
@@ -174,36 +250,32 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
 
   return (
     <Modal open={open} onClose={close} size="xl" showClose={false} bodyClassName="p-0">
-      <div className="flex max-h-[calc(100vh-3rem)] flex-col">
+      <div className="flex max-h-[calc(100vh-3rem)] flex-col bg-surface text-ink transition-colors">
         <div className="flex items-start justify-between gap-4 px-6 pt-6 sm:px-9">
           <div>
             <h2 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink">
               Preferences
             </h2>
-            <p className="mt-1.5 text-[13px] text-muted">
-              Customize your account profile, workspace appearance, and task reminders.
+            <p className="mt-1 text-[13px] text-muted">
+              Customize your profile, appearance, and reminder settings.
             </p>
           </div>
           <button
             type="button"
             onClick={close}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-muted transition-colors hover:bg-line hover:text-ink"
-            aria-label="Close preferences"
+            disabled={saving || uploading}
+            className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-muted transition-colors hover:bg-line hover:text-ink disabled:opacity-50"
+            aria-label="Close dialog"
           >
-            <span className="text-lg leading-none">×</span>
+            ✕
           </button>
         </div>
 
-        <div className="mt-5 flex-1 overflow-y-auto border-t border-line px-6 py-5 sm:px-9">
-          <SectionLabel>Account profile</SectionLabel>
-
-          <div className="mt-3 flex flex-wrap items-center gap-4">
-            <Avatar name={name || user.name} src={user.avatar_url} size={48} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold text-ink">{name || user.name}</p>
-              <p className="truncate text-xs text-muted">{user.email} • Workspace Owner</p>
-            </div>
-            <div className="flex items-center gap-3">
+        <div className="mt-4 flex-1 overflow-y-auto border-t border-line px-6 py-6 sm:px-9">
+          <SectionLabel>Profile photo</SectionLabel>
+          <div className="mt-3 flex items-center gap-4">
+            <Avatar name={user.name} src={user.avatar_url} size={64} />
+            <div className="flex items-center gap-2">
               <input
                 ref={fileRef}
                 type="file"
@@ -211,7 +283,6 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
-
                   if (file) {
                     void uploadAvatar(file);
                   }
@@ -241,7 +312,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Full Name" htmlFor={nameId}>
+            <Field label="Full Name" htmlFor={nameId} error={fieldErrors.name}>
               <Input
                 id={nameId}
                 value={name}
@@ -252,7 +323,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
             <Field
               label="Email Address"
               htmlFor={emailId}
-              hint="Email changes are not available yet."
+              hint="Email address cannot be modified here."
             >
               <Input id={emailId} value={user.email} readOnly disabled />
             </Field>
@@ -261,7 +332,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
           <div className="my-5 h-px bg-line" />
 
           <SectionLabel>Appearance &amp; theme</SectionLabel>
-          <div className="mt-3 grid grid-cols-2 gap-1 rounded-[12px] border border-line-strong bg-surface-2 p-1">
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-[12px] border border-line-strong bg-surface-2 p-1.5">
             {(
               [
                 { value: 'light' as Theme, label: 'Light Theme', icon: Sun },
@@ -274,12 +345,12 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setTheme(value)}
+                  onClick={() => handleThemeChange(value)}
                   aria-pressed={active}
                   className={clsx(
-                    'flex h-9 items-center justify-center gap-2 rounded-lg text-[13px] transition-colors',
+                    'flex h-10 items-center justify-center gap-2 rounded-lg text-[13px] font-medium transition-colors',
                     active
-                      ? 'bg-surface font-semibold text-ink shadow-sm'
+                      ? 'bg-surface font-semibold text-brand-strong border border-brand/30 shadow-sm'
                       : 'text-muted hover:text-ink',
                   )}
                 >
@@ -288,6 +359,88 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
                 </button>
               );
             })}
+          </div>
+
+          <div className="my-5 h-px bg-line" />
+
+          <SectionLabel>Security &amp; change password</SectionLabel>
+          <p className="mt-1 text-xs text-muted">
+            Leave blank if you do not wish to change your password.
+          </p>
+
+          <div className="mt-3 flex flex-col gap-3">
+            <Field
+              label="Current Password"
+              htmlFor={currentPassId}
+              error={fieldErrors.current_password}
+            >
+              <div className="relative">
+                <Input
+                  id={currentPassId}
+                  type={showCurrentPass ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Enter current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="pr-11"
+                  invalid={Boolean(fieldErrors.current_password)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPass((c) => !c)}
+                  className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-muted hover:text-ink"
+                  aria-label={showCurrentPass ? 'Hide password' : 'Show password'}
+                >
+                  {showCurrentPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </Field>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="New Password"
+                htmlFor={newPassId}
+                error={fieldErrors.new_password}
+                hint="8+ chars, upper/lower, number, symbol"
+              >
+                <div className="relative">
+                  <Input
+                    id={newPassId}
+                    type={showNewPass ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pr-11"
+                    invalid={Boolean(fieldErrors.new_password)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass((c) => !c)}
+                    className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-muted hover:text-ink"
+                    aria-label={showNewPass ? 'Hide password' : 'Show password'}
+                  >
+                    {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </Field>
+
+              <Field
+                label="Confirm New Password"
+                htmlFor={confirmPassId}
+                error={fieldErrors.new_password_confirmation}
+              >
+                <Input
+                  id={confirmPassId}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  invalid={Boolean(fieldErrors.new_password_confirmation)}
+                />
+              </Field>
+            </div>
           </div>
 
           <div className="my-5 h-px bg-line" />

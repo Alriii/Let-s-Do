@@ -16,7 +16,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { openAddTask } = useUI();
 
   return (
-    <div className="flex h-full flex-col justify-between px-6 pb-8 pt-9">
+    <div className="flex h-full flex-col justify-between px-6 pb-8 pt-9 bg-surface text-ink transition-colors">
       <div className="flex flex-col gap-9">
         <div className="flex items-center gap-3">
           <img
@@ -24,7 +24,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             alt="Let's Do!"
             className="h-11 w-11 rounded-[10px] object-contain shadow-[0_6px_14px_rgba(75,168,110,0.28)]"
           />
-          <span className="text-2xl font-bold tracking-[-0.02em] text-[#111514]">
+          <span className="text-2xl font-bold tracking-[-0.02em] text-ink">
             Let&rsquo;s Do!
           </span>
         </div>
@@ -40,8 +40,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 clsx(
                   'flex h-12 items-center gap-3 rounded-xl px-3.5 text-[15px] transition-colors',
                   isActive
-                    ? 'border border-[#1a8245]/30 bg-[#ebf6ee] font-bold text-[#1a8245]'
-                    : 'font-medium text-[#111514] hover:bg-surface-2',
+                    ? 'border border-brand/40 bg-brand-soft font-bold text-brand-strong'
+                    : 'font-medium text-ink hover:bg-surface-2',
                 )
               }
             >
@@ -63,14 +63,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="flex flex-col items-center gap-4">
-        <div className="relative flex h-[90px] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-[#ebf6ee] to-[#d8efe0]">
+        <div className="relative flex h-[90px] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-brand-tint to-brand-soft border border-line">
           <img
             src={botanicalPlantImg}
             alt="Botanical Plant"
             className="h-[90px] w-auto object-contain"
           />
         </div>
-        <p className="max-w-[190px] text-center text-[11px] leading-4 text-[#6b7280]">
+        <p className="max-w-[190px] text-center text-[11px] leading-4 text-muted">
           Rush and you will break,
           <br />
           Slow and you&rsquo;ll be safe.
@@ -89,18 +89,18 @@ export function Sidebar({
 }) {
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-[#eaeeeb] bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-line bg-surface lg:block transition-colors">
         <SidebarContent />
       </aside>
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-[#111514]/45 animate-fade-in"
+            className="absolute inset-0 bg-[#111514]/45 animate-fade-in backdrop-blur-[2px]"
             onClick={onClose}
             role="presentation"
           />
-          <div className="absolute inset-y-0 left-0 w-[280px] border-r border-[#eaeeeb] bg-white shadow-2xl animate-slide-up">
+          <div className="absolute inset-y-0 left-0 w-[280px] border-r border-line bg-surface shadow-2xl animate-slide-up">
             <button
               type="button"
               onClick={onClose}

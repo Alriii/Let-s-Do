@@ -18,6 +18,8 @@ const RULES = [
 export function SignupPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -26,6 +28,8 @@ export function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const firstNameId = useFieldId('signup-first-name');
+  const lastNameId = useFieldId('signup-last-name');
   const emailId = useFieldId('signup-email');
   const passwordId = useFieldId('signup-password');
   const confirmId = useFieldId('signup-confirm');
@@ -42,6 +46,14 @@ export function SignupPage() {
 
     const nextErrors: Record<string, string> = {};
 
+    if (!firstName.trim()) {
+      nextErrors.first_name = 'Enter your first name.';
+    }
+
+    if (!lastName.trim()) {
+      nextErrors.last_name = 'Enter your last name.';
+    }
+
     if (!email.trim()) {
       nextErrors.email = 'Enter your email address.';
     }
@@ -56,14 +68,27 @@ export function SignupPage() {
 
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
-      setError(nextErrors.email ?? nextErrors.password ?? nextErrors.password_confirmation ?? null);
+      setError(
+        nextErrors.first_name ??
+          nextErrors.last_name ??
+          nextErrors.email ??
+          nextErrors.password ??
+          nextErrors.password_confirmation ??
+          null,
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      await register(email.trim(), password, confirmation);
+      await register(
+        email.trim(),
+        password,
+        confirmation,
+        firstName.trim(),
+        lastName.trim(),
+      );
       navigate(`/signup/success?email=${encodeURIComponent(email.trim())}`);
     } catch (caught) {
       if (caught instanceof ApiError) {
@@ -76,7 +101,7 @@ export function SignupPage() {
         }
 
         setFieldErrors(next);
-        setError(next.email ?? next.password ?? caught.message);
+        setError(next.first_name ?? next.last_name ?? next.email ?? next.password ?? caught.message);
       } else {
         setError('Unable to create your account right now. Please try again.');
       }
@@ -113,6 +138,34 @@ export function SignupPage() {
       )}
 
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4" noValidate>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="First Name" htmlFor={firstNameId} error={fieldErrors.first_name}>
+            <Input
+              id={firstNameId}
+              type="text"
+              autoComplete="given-name"
+              placeholder="e.g. Alex"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              invalid={Boolean(fieldErrors.first_name)}
+              required
+            />
+          </Field>
+
+          <Field label="Last Name" htmlFor={lastNameId} error={fieldErrors.last_name}>
+            <Input
+              id={lastNameId}
+              type="text"
+              autoComplete="family-name"
+              placeholder="e.g. Morgan"
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              invalid={Boolean(fieldErrors.last_name)}
+              required
+            />
+          </Field>
+        </div>
+
         <Field label="Email" htmlFor={emailId} error={fieldErrors.email}>
           <Input
             id={emailId}

@@ -40,7 +40,9 @@ class TaskReminderMail extends Mailable
      */
     public function content(): Content
     {
-        $name = e($this->task->user->name);
+        $fullName = e($this->task->user->name);
+        $firstName = e(Str::before($this->task->user->name, ' '));
+        $greetingName = $firstName !== '' ? $firstName : $fullName;
         $title = e($this->task->title);
         $category = e($this->task->category);
         $priority = e($this->task->priority);
@@ -52,7 +54,7 @@ class TaskReminderMail extends Mailable
             htmlString: "
                 <div style='font-family: sans-serif; max-width: 500px;'>
                     <h2 style='color: #4F46E5;'>Let's Do! ⏰ Task Reminder</h2>
-                    <p>Hey {$name},</p>
+                    <p>Hey {$greetingName},</p>
                     <p>Your task is due in <strong>30 minutes</strong>:</p>
                     <div style='background:#f3f4f6; padding:16px; border-radius:8px; margin:16px 0;'>
                         <p style='margin:0; font-size:18px; font-weight:bold;'>{$title}</p>

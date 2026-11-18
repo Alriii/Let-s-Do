@@ -22,6 +22,8 @@ interface AuthContextValue {
     email: string,
     password: string,
     passwordConfirmation: string,
+    firstName?: string,
+    lastName?: string,
   ) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -44,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const applyTheme = useCallback((theme: Theme) => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    const isDark = theme === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.classList.toggle('light', !isDark);
     localStorage.setItem(THEME_KEY, theme);
   }, []);
 
@@ -99,11 +103,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (email: string, password: string, passwordConfirmation: string) =>
+    async (
+      email: string,
+      password: string,
+      passwordConfirmation: string,
+      firstName?: string,
+      lastName?: string,
+    ) =>
       api.post<RegisterResponse>('/auth/register', {
         email,
         password,
         password_confirmation: passwordConfirmation,
+        first_name: firstName,
+        last_name: lastName,
+        name: [firstName, lastName].filter(Boolean).join(' ') || undefined,
       }),
     [],
   );

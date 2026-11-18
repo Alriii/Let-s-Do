@@ -24,8 +24,8 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // The Figma signup screen only collects email + password, so the
-            // display name is optional and derived from the email when absent.
+            'first_name' => ['sometimes', 'required', 'string', 'max:120'],
+            'last_name' => ['sometimes', 'required', 'string', 'max:120'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => [
