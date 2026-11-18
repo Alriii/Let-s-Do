@@ -18,18 +18,24 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 Route::prefix('v1/auth')->group(function () {
     // Register
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:auth-register');
 
     // Email 6-Digit Code Verification
-    Route::post('/email/verify', [AuthController::class, 'verifyEmail']);
-    Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
+    Route::post('/email/verify', [AuthController::class, 'verifyEmail'])
+        ->middleware('throttle:auth-verify');
+    Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware('throttle:auth-code');
 
     // Login
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:auth-login');
 
     // Password Recovery
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:auth-code');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:auth-verify');
 });
 
 // ==========================================
@@ -42,6 +48,8 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/avatar', [AuthController::class, 'uploadAvatar']);
+        Route::delete('/avatar', [AuthController::class, 'destroyAvatar']);
     });
 
     // --- Dashboard Summary ---
@@ -50,6 +58,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     // --- Task Specific Views ---
     Route::get('/tasks/upcoming', [TaskController::class, 'upcoming']);
     Route::get('/tasks/completed', [TaskController::class, 'completed']);
+    Route::get('/tasks/calendar', [TaskController::class, 'calendar']);
 
     // --- Task Actions & CRUD ---
     Route::get('/tasks', [TaskController::class, 'index']);

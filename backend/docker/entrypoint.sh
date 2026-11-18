@@ -10,6 +10,12 @@ fi
 # Discover packages and cache config if in production
 php artisan package:discover --ansi || true
 
+# Apply any pending schema changes (idempotent; required for new columns)
+php artisan migrate --force --no-interaction
+
+# Public disk symlink so uploaded avatars are reachable at /storage/*
+php artisan storage:link || true
+
 if [ -n "$APP_KEY" ]; then
     php artisan config:cache || true
     php artisan route:cache || true

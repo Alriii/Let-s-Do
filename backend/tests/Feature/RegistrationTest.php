@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
 
@@ -33,4 +35,23 @@ test('registration requires a matching password confirmation', function () {
     // Should return 422 Validation Error
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['password']);
+});
+
+test('registration works without a name and derives one from the email', function () {
+    Mail::fake();
+
+    $response = $this->postJson('/api/v1/auth/register', [
+        'email' => 'jane.doe@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('requires_verification', true)
+        ->assertJsonPath('user.name', 'Jane Doe');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'jane.doe@example.com',
+        'name' => 'Jane Doe',
+    ]);
 });

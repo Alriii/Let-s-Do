@@ -18,6 +18,8 @@ class CancelTaskRequest extends FormRequest
     {
         return [
             'cancellation_reason' => ['required', 'string', 'max:255'],
+            // Optional free-text notes from the "Additional details" box.
+            'cancellation_note' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

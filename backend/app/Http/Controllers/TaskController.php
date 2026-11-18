@@ -6,59 +6,72 @@ use App\Http\Requests\Task\CancelTaskRequest;
 use App\Http\Requests\Task\CreateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Models\Task;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 /**
  * Controller handling user-scoped task operations:
- * List, Filter, Create, Show, Update, Complete, Cancel, and Delete.
+ * List, Filter, Create, Show, Update, Complete, Cancel, Delete, Calendar.
  */
 class TaskController extends Controller
 {
+    /**
+     * Allowed values, mirrored from the Figma task form.
+     */
+    private const CATEGORIES = ['Work', 'Personal', 'Health', 'Errands'];
+
+    private const PRIORITIES = ['Low', 'Medium', 'High'];
+
+    private const STATUSES = ['pending', 'completed', 'cancelled'];
+
     /**
      * List and filter tasks belonging to the authenticated user.
      */
     public function index(Request $request): JsonResponse
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', Rule::in(self::CATEGORIES)],
+            'priority' => ['nullable', Rule::in(self::PRIORITIES)],
+            'status' => ['nullable', Rule::in(self::STATUSES)],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'due_after' => ['nullable', 'date_format:Y-m-d'],
+            'due_before' => ['nullable', 'date_format:Y-m-d'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = $request->user()->tasks();
 
         // 1. Search keyword (in title or notes)
-        if ($search = $request->query('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+        if (! empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('title', 'like', "%{$filters['search']}%")
+                    ->orWhere('notes', 'like', "%{$filters['search']}%");
             });
         }
 
-        // 2. Filter by category
-        if ($category = $request->query('category')) {
-            $query->where('category', $category);
+        // 2. Exact-match filters
+        foreach (['category', 'priority', 'status', 'date'] as $field) {
+            if (! empty($filters[$field])) {
+                $query->where($field === 'date' ? 'due_date' : $field, $filters[$field]);
+            }
         }
 
-        // 3. Filter by priority
-        if ($priority = $request->query('priority')) {
-            $query->where('priority', $priority);
+        // 3. Inclusive date range (used by Pending Actions / week views)
+        if (! empty($filters['due_after'])) {
+            $query->where('due_date', '>=', $filters['due_after']);
         }
 
-        // 4. Filter by status
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
+        if (! empty($filters['due_before'])) {
+            $query->where('due_date', '<=', $filters['due_before']);
         }
 
-        // 5. Filter by specific date
-        if ($date = $request->query('date')) {
-            $query->where('due_date', $date);
-        }
+        $query->orderBy('due_date', 'asc')->orderBy('due_time', 'asc');
 
-        // Default ordering by due date and time
-        $tasks = $query->orderBy('due_date', 'asc')
-            ->orderBy('due_time', 'asc')
-            ->get();
-
-        return response()->json([
-            'tasks' => $tasks,
-            'count' => $tasks->count(),
-        ], 200);
+        return $this->paginatedResponse($query, $request);
     }
 
     /**
@@ -116,6 +129,9 @@ class TaskController extends Controller
         $task->update([
             'status' => 'completed',
             'completed_at' => now(),
+            'cancelled_at' => null,
+            'cancellation_reason' => null,
+            'cancellation_note' => null,
         ]);
 
         return response()->json([
@@ -125,7 +141,7 @@ class TaskController extends Controller
     }
 
     /**
-     * Cancel a task with a required reason.
+     * Cancel a task with a required reason and optional details.
      */
     public function cancel(CancelTaskRequest $request, Task $task): JsonResponse
     {
@@ -133,7 +149,10 @@ class TaskController extends Controller
 
         $task->update([
             'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'completed_at' => null,
             'cancellation_reason' => $request->validated('cancellation_reason'),
+            'cancellation_note' => $request->validated('cancellation_note'),
         ]);
 
         return response()->json([
@@ -152,7 +171,10 @@ class TaskController extends Controller
         $task->update([
             'status' => 'pending',
             'completed_at' => null,
+            'cancelled_at' => null,
             'cancellation_reason' => null,
+            'cancellation_note' => null,
+            'reminder_sent_at' => null,
         ]);
 
         return response()->json([
@@ -176,23 +198,30 @@ class TaskController extends Controller
     }
 
     /**
-     * List upcoming pending tasks due after today.
+     * List upcoming pending tasks due after today, with the three summary
+     * metrics shown on the Figma Upcoming screen.
      */
     public function upcoming(Request $request): JsonResponse
     {
         $today = now()->toDateString();
+        $tomorrow = now()->addDay()->toDateString();
+        $endOfWeek = now()->endOfWeek(Carbon::SUNDAY)->toDateString();
 
-        $tasks = $request->user()->tasks()
+        $query = $request->user()->tasks()
             ->where('status', 'pending')
             ->where('due_date', '>', $today)
             ->orderBy('due_date', 'asc')
-            ->orderBy('due_time', 'asc')
-            ->get();
+            ->orderBy('due_time', 'asc');
 
-        return response()->json([
-            'tasks' => $tasks,
-            'count' => $tasks->count(),
-        ], 200);
+        $summary = [
+            'total' => (clone $query)->count(),
+            'due_this_week' => (clone $query)
+                ->whereBetween('due_date', [$tomorrow, $endOfWeek])
+                ->count(),
+            'high_priority' => (clone $query)->where('priority', 'High')->count(),
+        ];
+
+        return $this->paginatedResponse($query, $request, ['summary' => $summary]);
     }
 
     /**
@@ -200,15 +229,90 @@ class TaskController extends Controller
      */
     public function completed(Request $request): JsonResponse
     {
-        $tasks = $request->user()->tasks()
+        $query = $request->user()->tasks()
             ->where('status', 'completed')
-            ->orderByDesc('completed_at')
+            ->orderByDesc('completed_at');
+
+        return $this->paginatedResponse($query, $request);
+    }
+
+    /**
+     * Per-day task counts for the calendar widget (month view).
+     * Days without tasks are omitted; click a day to load it via ?date=.
+     */
+    public function calendar(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $month = $validated['month'] ?? now()->format('Y-m');
+        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $rows = $request->user()->tasks()
+            ->whereBetween('due_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('due_date, status, COUNT(*) as aggregate')
+            ->groupBy('due_date', 'status')
             ->get();
 
+        $days = [];
+
+        foreach ($rows as $row) {
+            $dueDate = $row->due_date;
+            $date = $dueDate instanceof \DateTimeInterface
+                ? $dueDate->format('Y-m-d')
+                : substr((string) $dueDate, 0, 10);
+
+            $days[$date] ??= [
+                'date' => $date,
+                'total' => 0,
+                'pending' => 0,
+                'completed' => 0,
+                'cancelled' => 0,
+            ];
+
+            $count = (int) $row->aggregate;
+            $days[$date]['total'] += $count;
+
+            if (isset($days[$date][$row->status])) {
+                $days[$date][$row->status] += $count;
+            }
+        }
+
+        ksort($days);
+
         return response()->json([
-            'tasks' => $tasks,
-            'count' => $tasks->count(),
+            'month' => $month,
+            'days' => array_values($days),
+            'count' => count($days),
         ], 200);
+    }
+
+    /**
+     * Serialize a paginated task query with a stable response shape.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    protected function paginatedResponse(HasMany $query, Request $request, array $extra = []): JsonResponse
+    {
+        $perPage = $request->integer('per_page') ?: 50;
+        $perPage = max(1, min(100, $perPage));
+
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        return response()->json(array_merge([
+            'tasks' => $paginator->items(),
+            'count' => $paginator->count(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+        ], $extra), 200);
     }
 
     /**

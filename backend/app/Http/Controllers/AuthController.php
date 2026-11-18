@@ -15,6 +15,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Controller handling all authentication workflows:
@@ -36,9 +39,19 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        // 1. Create user (password automatically hashed by User model casts)
+        // 1. Create user (password automatically hashed by User model casts).
+        // The Figma signup form has no name field, so derive a friendly
+        // display name from the email when one is not supplied.
+        $name = $validated['name']
+            ?? Str::of($validated['email'])
+                ->before('@')
+                ->replace(['.', '_', '-'], ' ')
+                ->title()
+                ->trim()
+                ->toString();
+
         $user = User::create([
-            'name' => $validated['name'],
+            'name' => $name !== '' ? $name : 'User',
             'email' => $validated['email'],
             'password' => $validated['password'],
         ]);
@@ -49,11 +62,8 @@ class AuthController extends Controller
         // 3. Return response
         return response()->json([
             'message' => 'User registered successfully. Please check your email for the verification code.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
+            'requires_verification' => true,
+            'user' => $this->userPayload($user),
         ], 201);
     }
 
@@ -127,6 +137,7 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Please verify your email address before logging in.',
                 'requires_verification' => true,
+                'email' => $user->email,
             ], 403);
         }
 
@@ -142,12 +153,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'email_verified_at' => $user->email_verified_at,
-            ],
+            'user' => $this->userPayload($user),
         ], 200);
     }
 
@@ -176,32 +182,46 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
-
         return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'email_verified_at' => $user->email_verified_at,
-                'created_at' => $user->created_at,
-            ],
+            'user' => $this->userPayload($request->user()),
         ], 200);
     }
 
     /**
-     * Update authenticated user profile (name and/or password).
+     * Update the authenticated user's profile and preferences.
      */
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
 
-        // 1. Update name if provided
+        // 1. Email changes need a re-verification flow that does not exist yet.
+        if ($request->filled('email') && Str::lower($request->string('email')->toString()) !== $user->email) {
+            return response()->json([
+                'message' => 'Changing your email address is not supported yet.',
+            ], 422);
+        }
+
+        // 2. Update display name if provided
         if ($request->has('name')) {
             $user->name = $request->validated('name');
         }
 
-        // 2. Update password if requested
+        // 3. Persist the Preferences screen toggles
+        if ($request->has('theme')) {
+            $user->theme = $request->validated('theme');
+        }
+
+        if ($request->has('task_reminders_enabled')) {
+            $user->task_reminders_enabled = $request->validated('task_reminders_enabled');
+        }
+
+        if ($request->has('daily_digest_enabled')) {
+            $user->daily_digest_enabled = $request->validated('daily_digest_enabled');
+        }
+
+        // 4. Update password if requested
+        $passwordChanged = false;
+
         if ($request->filled('new_password')) {
             // Verify current password matches
             if (! Hash::check($request->validated('current_password'), $user->password)) {
@@ -211,17 +231,64 @@ class AuthController extends Controller
             }
 
             $user->password = $request->validated('new_password');
+            $passwordChanged = true;
         }
 
         $user->save();
 
+        // 5. Changing the password revokes every other API token.
+        if ($passwordChanged) {
+            $this->revokeOtherTokens($request, $user);
+        }
+
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
+            'user' => $this->userPayload($user->fresh()),
+        ], 200);
+    }
+
+    /**
+     * Upload or replace the authenticated user's avatar.
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        $user->avatar_path = $validated['avatar']->store('avatars', 'public');
+        $user->save();
+
+        return response()->json([
+            'message' => 'Avatar updated successfully.',
+            'avatar_url' => $user->avatarUrl(),
+            'user' => $this->userPayload($user),
+        ], 200);
+    }
+
+    /**
+     * Remove the authenticated user's avatar.
+     */
+    public function destroyAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $user->avatar_path = null;
+            $user->save();
+        }
+
+        return response()->json([
+            'message' => 'Avatar removed.',
+            'avatar_url' => null,
+            'user' => $this->userPayload($user),
         ], 200);
     }
 
@@ -262,15 +329,58 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // 2. Update password
+        // 2. Update password and revoke every existing API token so stolen
+        // sessions cannot survive a password reset.
         $user = User::where('email', $validated['email'])->first();
         if ($user) {
             $user->password = $validated['password'];
             $user->save();
+            $user->tokens()->delete();
         }
 
         return response()->json([
             'message' => 'Password reset successfully. You can now log in with your new password.',
         ], 200);
+    }
+
+    /**
+     * Consistent user payload shared by the auth endpoints.
+     *
+     * @return array<string, mixed>
+     */
+    protected function userPayload(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'email_verified_at' => $user->email_verified_at,
+            'avatar_url' => $user->avatarUrl(),
+            'preferences' => [
+                'theme' => $user->theme,
+                'task_reminders_enabled' => $user->task_reminders_enabled,
+                'daily_digest_enabled' => $user->daily_digest_enabled,
+            ],
+            'created_at' => $user->created_at,
+        ];
+    }
+
+    /**
+     * Revoke all API tokens except the one making the current request.
+     */
+    protected function revokeOtherTokens(Request $request, User $user): void
+    {
+        $currentToken = $request->user()?->currentAccessToken();
+        $currentTokenId = $currentToken instanceof PersonalAccessToken
+            ? $currentToken->getKey()
+            : null;
+
+        $tokens = $user->tokens();
+
+        if ($currentTokenId !== null) {
+            $tokens->whereKeyNot($currentTokenId);
+        }
+
+        $tokens->delete();
     }
 }

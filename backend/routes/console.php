@@ -17,3 +17,6 @@ Artisan::command('inspire', function () {
 
 // Send task reminder emails every minute, checking for tasks due in 30 mins
 Schedule::command('tasks:send-reminders')->everyMinute();
+
+// Morning schedule digest, matching the Preferences "8:00 AM" promise
+Schedule::command('tasks:send-daily-digest')->dailyAt('08:00');

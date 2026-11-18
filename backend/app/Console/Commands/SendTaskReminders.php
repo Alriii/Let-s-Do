@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\TaskReminderMail;
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -28,26 +29,28 @@ class SendTaskReminders extends Command
     /**
      * Execute the command.
      */
-    public function handle(): void
+    public function handle(): int
     {
         $now = now();
         $in30 = now()->addMinutes(30);
 
         // Find all pending tasks that:
-        // 1. Have a due_time set
-        // 2. Are due today
-        // 3. Due time is within the next 30 minutes
-        // 4. Have NOT already received a reminder email
+        // 1. Belong to a user who kept task reminders enabled
+        // 2. Have a due_time set
+        // 3. Are due today
+        // 4. Due time is within the next 30 minutes
+        // 5. Have NOT already received a reminder email
         $tasks = Task::with('user')
             ->where('status', 'pending')
             ->where('due_date', $now->toDateString())
             ->whereNotNull('due_time')
             ->whereNull('reminder_sent_at')
+            ->whereHas('user', fn ($query) => $query->where('task_reminders_enabled', true))
             ->get()
             ->filter(function (Task $task) use ($now, $in30) {
                 // Parse the due time combined with the due date
-                $dueDateTime = \Carbon\Carbon::parse(
-                    $task->due_date->toDateString() . ' ' . $task->due_time
+                $dueDateTime = Carbon::parse(
+                    $task->due_date->toDateString().' '.$task->due_time
                 );
 
                 // Only tasks falling within the next 30-minute window
@@ -65,5 +68,7 @@ class SendTaskReminders extends Command
         }
 
         $this->info("Task reminder check complete. {$tasks->count()} reminder(s) sent.");
+
+        return self::SUCCESS;
     }
 }

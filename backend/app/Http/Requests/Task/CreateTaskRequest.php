@@ -20,9 +20,9 @@ class CreateTaskRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'in:Work,Personal,Health,Errands'],
             'due_date' => ['required', 'date'],
-            'due_time' => ['nullable', 'string'],
+            'due_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'priority' => ['required', 'string', 'in:Low,Medium,High'],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

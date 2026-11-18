@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
@@ -58,6 +59,26 @@ test('login fails with invalid password', function () {
     $response->assertStatus(401);
 });
 
+test('login attempts are rate limited', function () {
+    User::factory()->create([
+        'email' => 'throttle@example.com',
+        'password' => 'ValidPass123!',
+        'email_verified_at' => now(),
+    ]);
+
+    for ($attempt = 0; $attempt < 5; $attempt++) {
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'throttle@example.com',
+            'password' => 'WrongPassword!',
+        ])->assertStatus(401);
+    }
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'throttle@example.com',
+        'password' => 'WrongPassword!',
+    ])->assertStatus(429);
+});
+
 test('authenticated user can view their profile and log out', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
@@ -110,5 +131,5 @@ test('authenticated user can update profile name and password', function () {
         ])
         ->assertStatus(200);
 
-    $this->assertTrue(\Illuminate\Support\Facades\Hash::check('BrandNewPass123!', $user->fresh()->password));
+    $this->assertTrue(Hash::check('BrandNewPass123!', $user->fresh()->password));
 });
