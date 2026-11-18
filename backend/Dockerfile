@@ -20,10 +20,9 @@ RUN apt-get update && apt-get install -y \
     opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Point Apache DocumentRoot to Laravel's public directory
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Point Apache DocumentRoot directly to Laravel's public directory
+RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Enable Apache mod_rewrite for Laravel API routing
 RUN a2enmod rewrite
@@ -41,8 +40,9 @@ COPY . /var/www/html
 RUN sed -i 's/\r$//' /var/www/html/docker/entrypoint.sh \
     && chmod +x /var/www/html/docker/entrypoint.sh
 
-# Install production dependencies without dev tools
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install production dependencies without running artisan scripts during build
+# (Scripts will run at container startup when environment variables are present)
+RUN composer install --no-dev --no-scripts --optimize-autoloader --no-interaction
 
 # Set proper permissions for Laravel writable directories
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \

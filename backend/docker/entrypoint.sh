@@ -7,7 +7,9 @@ if [ -n "$PORT" ]; then
     sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf
 fi
 
-# Optimize Laravel caches if in production and APP_KEY is present
+# Discover packages and cache config if in production
+php artisan package:discover --ansi || true
+
 if [ -n "$APP_KEY" ]; then
     php artisan config:cache || true
     php artisan route:cache || true
