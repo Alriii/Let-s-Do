@@ -29,6 +29,7 @@ class Task extends Model
         'status',
         'cancellation_reason',
         'completed_at',
+        'reminder_sent_at',
     ];
 
     /**
@@ -39,6 +40,7 @@ class Task extends Model
         return [
             'due_date' => 'date:Y-m-d',
             'completed_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
         ];
     }
 
