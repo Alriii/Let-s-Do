@@ -1,0 +1,123 @@
+export type TaskStatus = 'pending' | 'completed' | 'cancelled';
+export type TaskPriority = 'Low' | 'Medium' | 'High';
+export type TaskCategory = 'Work' | 'Personal' | 'Health' | 'Errands';
+export type Theme = 'light' | 'dark';
+
+export const CATEGORIES: TaskCategory[] = ['Work', 'Personal', 'Health', 'Errands'];
+export const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High'];
+
+export interface Task {
+  id: number;
+  user_id: number;
+  title: string;
+  category: TaskCategory;
+  due_date: string;
+  due_time: string | null;
+  priority: TaskPriority;
+  notes: string | null;
+  status: TaskStatus;
+  cancellation_reason: string | null;
+  cancellation_note: string | null;
+  cancelled_at: string | null;
+  completed_at: string | null;
+  reminder_sent_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Preferences {
+  theme: Theme;
+  task_reminders_enabled: boolean;
+  daily_digest_enabled: boolean;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  avatar_url: string | null;
+  preferences: Preferences;
+  created_at?: string;
+}
+
+export interface PageMeta {
+  current_page: number;
+  per_page: number;
+  last_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
+}
+
+export interface TaskListResponse {
+  tasks: Task[];
+  count: number;
+  meta: PageMeta;
+}
+
+export interface UpcomingSummary {
+  total: number;
+  due_this_week: number;
+  high_priority: number;
+}
+
+export interface UpcomingResponse extends TaskListResponse {
+  summary: UpcomingSummary;
+}
+
+export interface DashboardResponse {
+  metrics: {
+    today_total: number;
+    today_completed: number;
+    pending_actions: number;
+  };
+  today_tasks: Task[];
+  upcoming_preview: Task[];
+  categories: Record<TaskCategory, number>;
+}
+
+export interface CalendarDay {
+  date: string;
+  total: number;
+  pending: number;
+  completed: number;
+  cancelled: number;
+}
+
+export interface CalendarResponse {
+  month: string;
+  days: CalendarDay[];
+  count: number;
+}
+
+export interface LoginResponse {
+  message: string;
+  token: string;
+  user: User;
+}
+
+export interface RegisterResponse {
+  message: string;
+  requires_verification: boolean;
+  user: User;
+}
+
+export interface ProfileResponse {
+  message: string;
+  user: User;
+}
+
+export interface TaskResponse {
+  message: string;
+  task: Task;
+}
+
+export interface TaskInput {
+  title: string;
+  category: TaskCategory;
+  due_date: string;
+  due_time: string | null;
+  priority: TaskPriority;
+  notes: string | null;
+}
