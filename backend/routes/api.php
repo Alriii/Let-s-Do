@@ -29,6 +29,7 @@ Route::prefix('v1/auth')->group(function () {
 
     // Login
     Route::post('/login', [AuthController::class, 'login'])
+        ->name('login')
         ->middleware('throttle:auth-login');
 
     // Password Recovery
