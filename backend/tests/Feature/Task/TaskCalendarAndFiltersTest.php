@@ -116,8 +116,8 @@ test('upcoming returns the three summary metrics shown in the design', function 
         'due_date' => '2026-10-27',
         'priority' => 'High',
     ]);
-    Task::factory()->for($user)->create(['due_date' => '2026-10-28']);
-    Task::factory()->for($user)->create(['due_date' => '2026-11-05']);
+    Task::factory()->for($user)->create(['due_date' => '2026-10-28', 'priority' => 'Medium']);
+    Task::factory()->for($user)->create(['due_date' => '2026-11-05', 'priority' => 'Low']);
     // Completed tasks must not be counted.
     Task::factory()->for($user)->completed()->create(['due_date' => '2026-10-27']);
 
