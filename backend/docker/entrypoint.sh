@@ -16,5 +16,8 @@ if [ -n "$APP_KEY" ]; then
     php artisan view:cache || true
 fi
 
+# Start background scheduler for automated task reminder emails
+php artisan schedule:work > /dev/null 2>&1 &
+
 # Execute main container process
 exec "$@"
