@@ -93,10 +93,15 @@ export interface CalendarDay {
   pending: number;
   completed: number;
   cancelled: number;
+  holiday?: {
+    name: string;
+    type: 'regular' | 'special'; // regular = red national holiday, special = amber non-working day
+  } | null;
 }
 
 export interface CalendarResponse {
   month: string;
+  country: string;
   days: CalendarDay[];
   count: number;
 }

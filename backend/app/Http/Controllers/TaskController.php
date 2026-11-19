@@ -6,6 +6,7 @@ use App\Http\Requests\Task\CancelTaskRequest;
 use App\Http\Requests\Task\CreateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Models\Task;
+use App\Services\PhilippineCalendarService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,9 @@ use Illuminate\Validation\Rule;
  */
 class TaskController extends Controller
 {
+    public function __construct(
+        private PhilippineCalendarService $calendarSvc,
+    ) {}
     /**
      * Allowed values, mirrored from the Figma task form.
      */
@@ -256,18 +260,21 @@ class TaskController extends Controller
     }
 
     /**
-     * Per-day task counts for the calendar widget (month view).
-     * Days without tasks are omitted; click a day to load it via ?date=.
+     * Per-day task counts + Philippine holiday info for the calendar widget (month view).
+     * Days without tasks are still included if they are holidays.
      */
     public function calendar(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'month' => ['nullable', 'date_format:Y-m'],
+            'month'   => ['nullable', 'date_format:Y-m'],
+            'country' => ['nullable', 'string', 'max:10'], // e.g. 'PH'
         ]);
 
         $month = $validated['month'] ?? now()->format('Y-m');
+        $country = strtoupper($validated['country'] ?? 'PH');
+
         $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        $end = $start->copy()->endOfMonth();
+        $end   = $start->copy()->endOfMonth();
 
         $rows = $request->user()->tasks()
             ->whereBetween('due_date', [$start->toDateString(), $end->toDateString()])
@@ -284,11 +291,12 @@ class TaskController extends Controller
                 : substr((string) $dueDate, 0, 10);
 
             $days[$date] ??= [
-                'date' => $date,
-                'total' => 0,
-                'pending' => 0,
+                'date'      => $date,
+                'total'     => 0,
+                'pending'   => 0,
                 'completed' => 0,
                 'cancelled' => 0,
+                'holiday'   => null,
             ];
 
             $count = (int) $row->aggregate;
@@ -299,12 +307,39 @@ class TaskController extends Controller
             }
         }
 
+        // Overlay Philippine holidays for PH users (or any user requesting PH)
+        if ($country === 'PH') {
+            $cursor = $start->copy();
+            while ($cursor->lte($end)) {
+                $iso     = $cursor->format('Y-m-d');
+                $holiday = $this->calendarSvc->getHoliday($cursor);
+
+                if ($holiday) {
+                    $days[$iso] ??= [
+                        'date'      => $iso,
+                        'total'     => 0,
+                        'pending'   => 0,
+                        'completed' => 0,
+                        'cancelled' => 0,
+                        'holiday'   => null,
+                    ];
+                    $days[$iso]['holiday'] = [
+                        'name' => $holiday['name'],
+                        'type' => $holiday['type'], // 'regular' | 'special'
+                    ];
+                }
+
+                $cursor->addDay();
+            }
+        }
+
         ksort($days);
 
         return response()->json([
-            'month' => $month,
-            'days' => array_values($days),
-            'count' => count($days),
+            'month'   => $month,
+            'country' => $country,
+            'days'    => array_values($days),
+            'count'   => count(array_filter($days, fn ($d) => $d['total'] > 0)),
         ], 200);
     }
 

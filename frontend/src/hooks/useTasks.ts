@@ -82,7 +82,7 @@ export function useCompleted(page = 1) {
 export function useCalendar(month: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.calendar(month),
-    queryFn: () => api.get<CalendarResponse>(`/tasks/calendar?month=${month}`),
+    queryFn: () => api.get<CalendarResponse>(`/tasks/calendar?month=${month}&country=PH`),
     enabled,
   });
 }

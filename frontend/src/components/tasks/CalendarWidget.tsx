@@ -33,7 +33,6 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
 
   const selectDate = (date: Date) => {
     const iso = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-${`${date.getDate()}`.padStart(2, '0')}`;
-
     setMonth(monthKey(date));
     onSelectDate(selectedDate === iso ? null : iso);
   };
@@ -88,7 +87,11 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
               const inMonth = monthKey(date) === month;
               const selected = selectedDate === iso;
               const isToday = iso === today;
-              const hasTasks = (counts.get(iso)?.total ?? 0) > 0;
+              const dayData = counts.get(iso);
+              const hasTasks = (dayData?.total ?? 0) > 0;
+              const holiday = dayData?.holiday ?? null;
+              const isRegularHoliday = holiday?.type === 'regular';
+              const isSpecialHoliday = holiday?.type === 'special';
 
               return (
                 <button
@@ -101,31 +104,75 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                       ? 'bg-gradient-to-b from-brand to-brand-strong font-bold text-white shadow-xs'
                       : isToday
                         ? 'border border-brand/50 font-bold text-brand-strong bg-brand-soft/60 hover:bg-brand-soft'
-                        : inMonth
-                          ? 'text-ink hover:bg-surface-2'
-                          : 'text-faint/60 hover:bg-surface-2',
+                        : isRegularHoliday && inMonth
+                          ? 'bg-rose-50/80 font-semibold text-rose-600 hover:bg-rose-100/80'
+                          : isSpecialHoliday && inMonth
+                            ? 'bg-amber-50/80 font-semibold text-amber-700 hover:bg-amber-100/80'
+                            : inMonth
+                              ? 'text-ink hover:bg-surface-2'
+                              : 'text-faint/60 hover:bg-surface-2',
                   )}
-                  aria-label={`${iso}${hasTasks ? `, ${counts.get(iso)?.total} tasks` : ''}`}
+                  aria-label={[
+                    iso,
+                    hasTasks ? `${dayData?.total} tasks` : '',
+                    holiday ? `Philippine ${holiday.type} holiday: ${holiday.name}` : '',
+                  ].filter(Boolean).join(', ')}
                   aria-pressed={selected}
+                  title={holiday ? `🇵🇭 ${holiday.name}` : undefined}
                 >
                   {date.getDate()}
-                  {hasTasks && (
-                    <span
-                      className={clsx(
-                        'absolute bottom-[3px] h-1 w-1 rounded-full',
-                        selected ? 'bg-white' : 'bg-brand',
-                        counts.get(iso)?.pending === 0 && !selected && 'bg-brand/45',
+
+                  {/* Dot row: tasks dot + holiday dot */}
+                  {(hasTasks || (holiday && inMonth)) && (
+                    <span className="absolute bottom-[3px] flex items-center gap-[3px]">
+                      {hasTasks && (
+                        <span
+                          className={clsx(
+                            'h-1 w-1 rounded-full',
+                            selected
+                              ? 'bg-white'
+                              : dayData?.pending === 0
+                                ? 'bg-brand/40'
+                                : 'bg-brand',
+                          )}
+                          aria-hidden
+                        />
                       )}
-                    />
+                      {holiday && inMonth && !selected && (
+                        <span
+                          className={clsx(
+                            'h-1 w-1 rounded-full',
+                            isRegularHoliday ? 'bg-rose-500' : 'bg-amber-500',
+                          )}
+                          aria-hidden
+                        />
+                      )}
+                    </span>
                   )}
                 </button>
               );
             })}
           </div>
+
+          {/* Legend */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line pt-2.5">
+            <span className="flex items-center gap-1.5 text-[10.5px] text-muted">
+              <span className="h-2 w-2 rounded-full bg-brand shrink-0" aria-hidden />
+              Scheduled tasks
+            </span>
+            <span className="flex items-center gap-1.5 text-[10.5px] text-muted">
+              <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" aria-hidden />
+              Regular holiday
+            </span>
+            <span className="flex items-center gap-1.5 text-[10.5px] text-muted">
+              <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" aria-hidden />
+              Special non-working
+            </span>
+          </div>
         </>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-2.5">
+      <div className="mt-2 flex items-center justify-between gap-3 border-t border-line pt-2.5">
         <span className="text-[11px] text-muted">
           {selectedDate
             ? `Showing ${parseISODate(selectedDate).getDate()} ${formatMonthLabel(monthKey(parseISODate(selectedDate)))}`
