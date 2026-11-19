@@ -26,6 +26,7 @@ use Laravel\Sanctum\HasApiTokens;
     'task_reminders_enabled',
     'daily_digest_enabled',
     'avatar_path',
+    'avatar_data',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -50,21 +51,26 @@ class User extends Authenticatable
 
     /**
      * Public URL for the user's uploaded avatar, if one exists.
+     * Prefers base64 data URL (avatar_data) which is persistent across
+     * container restarts — falls back to file-based avatar_path for
+     * backwards compatibility with any existing local uploads.
      */
     public function avatarUrl(): ?string
     {
+        // Prefer base64 data URL — works on Render/any ephemeral host
+        if ($this->avatar_data) {
+            return $this->avatar_data;
+        }
+
+        // Legacy: file-based path (local dev only)
         if (! $this->avatar_path) {
             return null;
         }
 
-        if (app()->runningInConsole()) {
-            /** @var FilesystemAdapter $disk */
-            $disk = Storage::disk('public');
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
 
-            return $disk->url($this->avatar_path);
-        }
-
-        return asset('storage/'.$this->avatar_path);
+        return $disk->url($this->avatar_path);
     }
 
     /**

@@ -250,6 +250,8 @@ class AuthController extends Controller
 
     /**
      * Upload or replace the authenticated user's avatar.
+     * Stores the image as a base64 data URL in the database so it
+     * persists across ephemeral container restarts (e.g. Render).
      */
     public function uploadAvatar(Request $request): JsonResponse
     {
@@ -258,34 +260,41 @@ class AuthController extends Controller
         if (! $file) {
             return response()->json([
                 'message' => 'Please select an image file to upload as your profile photo.',
-                'errors' => ['avatar' => ['No image file was received by the server.']],
+                'errors'  => ['avatar' => ['No image file was received by the server.']],
             ], 422);
         }
 
         if (! $file->isValid()) {
             return response()->json([
-                'message' => 'The uploaded file could not be processed (' . $file->getErrorMessage() . '). Please choose an image under 20MB.',
-                'errors' => ['avatar' => [$file->getErrorMessage()]],
+                'message' => 'The uploaded file could not be processed (' . $file->getErrorMessage() . '). Please choose an image under 2MB.',
+                'errors'  => ['avatar' => [$file->getErrorMessage()]],
             ], 422);
         }
 
-        $validated = $request->validate([
-            'avatar' => ['required', 'file', 'extensions:jpg,jpeg,png,webp,gif,bmp,svg,avif,heic,heif', 'max:20480'],
+        $request->validate([
+            'avatar' => ['required', 'file', 'extensions:jpg,jpeg,png,webp,gif,bmp,avif', 'max:2048'],
         ]);
 
         $user = $request->user();
 
+        // Convert to base64 data URL — stored in DB, no filesystem needed
+        $mime    = $file->getMimeType() ?: 'image/jpeg';
+        $encoded = base64_encode(file_get_contents($file->getRealPath()));
+        $dataUrl = "data:{$mime};base64,{$encoded}";
+
+        // Clear legacy file-based avatar if present
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);
+            $user->avatar_path = null;
         }
 
-        $user->avatar_path = $validated['avatar']->store('avatars', 'public');
+        $user->avatar_data = $dataUrl;
         $user->save();
 
         return response()->json([
-            'message' => 'Avatar updated successfully.',
+            'message'    => 'Avatar updated successfully.',
             'avatar_url' => $user->avatarUrl(),
-            'user' => $this->userPayload($user),
+            'user'       => $this->userPayload($user),
         ], 200);
     }
 
@@ -299,13 +308,16 @@ class AuthController extends Controller
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);
             $user->avatar_path = null;
-            $user->save();
         }
 
+        // Clear base64 avatar too
+        $user->avatar_data = null;
+        $user->save();
+
         return response()->json([
-            'message' => 'Avatar removed.',
+            'message'    => 'Avatar removed.',
             'avatar_url' => null,
-            'user' => $this->userPayload($user),
+            'user'       => $this->userPayload($user),
         ], 200);
     }
 
