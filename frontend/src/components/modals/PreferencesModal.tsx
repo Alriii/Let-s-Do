@@ -287,7 +287,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
           </button>
         </div>
 
-        <div className="mt-4 flex-1 overflow-y-auto border-t border-line px-6 py-6 sm:px-9">
+        <div className="mt-4 flex-1 overflow-y-auto border-t border-line px-6 py-6 sm:pl-9 sm:pr-8">
           <SectionLabel>Profile photo</SectionLabel>
           <div className="mt-3 flex items-center gap-4">
             <Avatar name={user.name} src={user.avatar_url} size={64} />
@@ -495,7 +495,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
 
           <SectionLabel>Notifications &amp; reminders</SectionLabel>
           <div className="mt-3 flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[13.5px] font-medium text-ink">Task Reminders</p>
                 <p className="text-xs text-muted">
@@ -504,7 +504,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
               </div>
               <Toggle checked={reminders} onChange={setReminders} label="Task reminders" />
             </div>
-            <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[13.5px] font-medium text-ink">Daily Schedule Digest</p>
                 <p className="text-xs text-muted">

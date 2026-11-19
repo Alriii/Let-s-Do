@@ -171,3 +171,31 @@ export interface ParseNotesResponse {
   summary: string;
   tasks: TaskInput[];
 }
+
+export interface AiConversationSummary {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages_count: number;
+  preview: string | null;
+}
+
+export interface AiConversationDetail {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: {
+    id: string;
+    role: 'user' | 'model';
+    text: string;
+    attachment?: {
+      name: string;
+      size: number;
+    } | null;
+    extracted_doc?: any | null;
+    proposed_schedule?: any | null;
+    timestamp: string;
+  }[];
+}

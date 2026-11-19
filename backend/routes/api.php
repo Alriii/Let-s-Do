@@ -78,6 +78,14 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::post('/parse-notes',     [\App\Http\Controllers\AiController::class, 'parseNotes']);
         Route::post('/import-tasks',    [\App\Http\Controllers\AiController::class, 'importTasks']);
         Route::post('/quick-parse',     [\App\Http\Controllers\AiController::class, 'quickParse']);
+
+        // Chat Conversations & History
+        Route::get('/conversations', [\App\Http\Controllers\AiController::class, 'listConversations']);
+        Route::post('/conversations', [\App\Http\Controllers\AiController::class, 'createConversation']);
+        Route::get('/conversations/{conversation}', [\App\Http\Controllers\AiController::class, 'showConversation']);
+        Route::delete('/conversations/{conversation}', [\App\Http\Controllers\AiController::class, 'destroyConversation']);
+        Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\AiController::class, 'appendMessage']);
+
         // Chat: 20 messages per minute per user
         Route::post('/chat', [\App\Http\Controllers\AiController::class, 'chat'])
             ->middleware('throttle:ai-chat');

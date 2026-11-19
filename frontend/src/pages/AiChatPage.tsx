@@ -6,17 +6,22 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  History,
   Loader2,
+  MessageSquare,
+  PanelLeftClose,
   Paperclip,
+  Plus,
+  Search,
   Send,
   Trash2,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../lib/api';
 import { categoryStyles, priorityStyles } from '../lib/format';
-import type { ParseNotesResponse, TaskInput } from '../lib/types';
+import type { AiConversationDetail, AiConversationSummary, ParseNotesResponse, TaskInput } from '../lib/types';
 import { useToast } from '../components/ui/Toast';
 import botAvatarImg from '../assets/bot-avatar.png';
 
@@ -64,6 +69,10 @@ interface ChatResponse {
   reply: string;
   proposed_tasks?: TaskInput[] | null;
   blocked: boolean;
+  conversation_id?: number;
+  user_message_id?: string;
+  ai_message_id?: string;
+  title?: string;
 }
 
 const STARTERS = [
@@ -79,6 +88,17 @@ const ACCEPTED_FILE_TYPES = '.pdf,.docx,.doc,.txt';
 function formatFileSize(bytes: number): string {
   const kb = Math.round(bytes / 1024);
   return kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`;
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 }
 
 /**
@@ -324,7 +344,7 @@ function ExtractedScheduleReview({
   );
 }
 
-// ─── Proposed Schedule Confirmation (Lumi directly suggests a schedule) ──────
+// ─── Proposed Schedule Confirmation (Lumi directly suggests a schedule) ───────
 
 function ProposedScheduleConfirmation({
   schedule,
@@ -404,7 +424,7 @@ function ProposedScheduleConfirmation({
             ) : (
               <>
                 <CalendarPlus className="h-4 w-4" aria-hidden />
-                Confirm &amp; Add {count} Task{count !== 1 ? 's' : ''} to Schedule 💚
+                Confirm & Add {count} Task{count !== 1 ? 's' : ''} to Schedule 💚
               </>
             )}
           </button>
@@ -469,7 +489,7 @@ function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: str
   );
 }
 
-// ─── Message Bubble Component ────────────────────────────────────────────────
+// ─── Message Bubble Component ─────────────────────────────────────────────────
 
 function Bubble({
   msg,
@@ -571,6 +591,128 @@ function Bubble({
   );
 }
 
+// ─── Conversation Sidebar ─────────────────────────────────────────────────────
+
+function ConversationSidebar({
+  conversations,
+  activeId,
+  loading,
+  searchQuery,
+  onSearchChange,
+  onSelect,
+  onDelete,
+  onNewChat,
+}: {
+  conversations: AiConversationSummary[];
+  activeId: number | null;
+  loading: boolean;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  onSelect: (id: number) => void;
+  onDelete: (id: number) => void;
+  onNewChat: () => void;
+}) {
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    const q = searchQuery.toLowerCase();
+    return conversations.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        (c.preview ?? '').toLowerCase().includes(q),
+    );
+  }, [conversations, searchQuery]);
+
+  return (
+    <div className="flex w-64 shrink-0 flex-col border-r border-line bg-surface-2 overflow-hidden">
+      {/* Sidebar header */}
+      <div className="flex shrink-0 items-center justify-between px-3 py-3 border-b border-line">
+        <span className="text-sm font-bold text-ink">Chat History</span>
+        <button
+          type="button"
+          onClick={onNewChat}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-muted hover:bg-brand-soft hover:text-brand transition-colors"
+          title="New chat"
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="shrink-0 px-3 py-2 border-b border-line">
+        <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5">
+          <Search className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search chats…"
+            className="flex-1 bg-transparent text-xs text-ink placeholder-muted outline-none"
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => onSearchChange('')} className="text-muted hover:text-ink">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Conversation list */}
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-muted">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-muted">
+            <MessageSquare className="h-8 w-8 opacity-30" aria-hidden />
+            <p className="text-xs">
+              {searchQuery ? 'No chats match your search.' : 'No past chats yet. Start one below!'}
+            </p>
+          </div>
+        ) : (
+          <ul className="py-1">
+            {filtered.map((conv) => (
+              <li key={conv.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(conv.id)}
+                  className={`group relative w-full px-3 py-2.5 text-left transition-colors hover:bg-brand-soft ${
+                    activeId === conv.id ? 'bg-brand-soft border-r-2 border-brand' : ''
+                  }`}
+                >
+                  <p className={`truncate text-xs font-semibold leading-snug ${activeId === conv.id ? 'text-brand-deep' : 'text-ink'}`}>
+                    {conv.title}
+                  </p>
+                  {conv.preview && (
+                    <p className="mt-0.5 truncate text-[11px] text-muted leading-snug">
+                      {conv.preview}
+                    </p>
+                  )}
+                  <p className="mt-0.5 text-[10px] text-muted/70">
+                    {formatRelativeTime(conv.updated_at)}
+                  </p>
+                  {/* Delete button (shows on hover) */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(conv.id);
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-red-100 hover:text-red-600 transition-colors"
+                    title="Delete this conversation"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main AI Chat Page ────────────────────────────────────────────────────────
 
 export function AiChatPage() {
@@ -583,6 +725,14 @@ export function AiChatPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // History sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [conversations, setConversations] = useState<AiConversationSummary[]>([]);
+  const [convLoading, setConvLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -591,6 +741,21 @@ export function AiChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
+
+  // Load conversation list on mount
+  useEffect(() => {
+    void (async () => {
+      setConvLoading(true);
+      try {
+        const data = await api.get<AiConversationSummary[]>('/ai/conversations');
+        setConversations(data);
+      } catch {
+        // ignore silently
+      } finally {
+        setConvLoading(false);
+      }
+    })();
+  }, []);
 
   // Auto-resize textarea
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -625,7 +790,62 @@ export function AiChatPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // ─── Send handler (Text or Document) ────────────────────────────────────────
+  // ─── Load a past conversation ──────────────────────────────────────────────
+
+  const loadConversation = async (id: number) => {
+    setHistoryLoading(true);
+    setError(null);
+    try {
+      const detail = await api.get<AiConversationDetail>(`/ai/conversations/${id}`);
+      const loaded: Message[] = detail.messages.map((m) => ({
+        id: m.id,
+        role: m.role as 'user' | 'model',
+        text: m.text,
+        timestamp: new Date(m.timestamp),
+        attachment: m.attachment ? { name: m.attachment.name, size: m.attachment.size } : undefined,
+        proposedSchedule: m.proposed_schedule
+          ? {
+              tasks: m.proposed_schedule as TaskInput[],
+              selectedIndices: (m.proposed_schedule as TaskInput[]).map((_, i) => i),
+              imported: false,
+            }
+          : undefined,
+      }));
+      setMessages(loaded);
+      setActiveConversationId(id);
+    } catch {
+      toast.error('Could not load that conversation.');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // ─── Start a new chat ─────────────────────────────────────────────────────
+
+  const startNewChat = () => {
+    setMessages([]);
+    setError(null);
+    setAttachedFile(null);
+    setActiveConversationId(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  // ─── Delete a conversation ────────────────────────────────────────────────
+
+  const deleteConversation = async (id: number) => {
+    try {
+      await api.delete(`/ai/conversations/${id}`);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeConversationId === id) {
+        startNewChat();
+      }
+      toast.success('Conversation deleted.');
+    } catch {
+      toast.error('Could not delete conversation.');
+    }
+  };
+
+  // ─── Send handler (Text or Document) ──────────────────────────────────────
 
   const handleSend = async (overrideText?: string) => {
     const textToSend = (overrideText ?? input).trim();
@@ -666,7 +886,7 @@ export function AiChatPage() {
     setIsProcessing(true);
 
     if (fileToSend) {
-      // ── File Analysis Flow with Inline Progression ─────────────────────────
+      // ── File Analysis Flow with Inline Progression ──────────────────────────
       // Add initial AI placeholder in 'reading_file' state
       const initialAiMsg: Message = {
         id: aiMessageId,
@@ -781,7 +1001,36 @@ export function AiChatPage() {
         const res = await api.post<ChatResponse>('/ai/chat', {
           message: textToSend,
           history,
+          conversation_id: activeConversationId,
         });
+
+        // Update active conversation ID from backend
+        if (res.conversation_id) {
+          const newId = res.conversation_id;
+          setActiveConversationId(newId);
+
+          // Update or prepend this conversation in sidebar list
+          setConversations((prev) => {
+            const exists = prev.find((c) => c.id === newId);
+            if (exists) {
+              return [
+                { ...exists, title: res.title ?? exists.title, preview: textToSend, updated_at: new Date().toISOString() },
+                ...prev.filter((c) => c.id !== newId),
+              ];
+            }
+            return [
+              {
+                id: newId,
+                title: res.title ?? textToSend.slice(0, 60),
+                preview: textToSend,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                messages_count: 1,
+              },
+              ...prev,
+            ];
+          });
+        }
 
         let cleanReply = res.reply;
         let proposedTasks: TaskInput[] | null = res.proposed_tasks || null;
@@ -839,7 +1088,7 @@ export function AiChatPage() {
     }
   };
 
-  // ─── Extracted Document Card Handlers ───────────────────────────────────────
+  // ─── Extracted Document Card Handlers ─────────────────────────────────────
 
   const handleToggleDocIndex = useCallback((messageId: string, index: number) => {
     setMessages((prev) =>
@@ -1069,188 +1318,222 @@ export function AiChatPage() {
     [messages, queryClient, toast],
   );
 
-  const clearChat = () => {
-    setMessages([]);
-    setError(null);
-    setAttachedFile(null);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
-
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col rounded-[20px] border border-line bg-surface shadow-xs overflow-hidden">
-      {/* ── Header ── */}
-      <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
-        <div className="flex items-center gap-3">
-          <img
-            src={botAvatarImg}
-            alt="Lumi"
-            className="h-10 w-10 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
-          />
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-ink">Lumi</h1>
-            <p className="text-xs sm:text-sm text-muted">
-              Lumi, your Let's Do! AI companion • Philippine Calendar aware 🇵🇭
-            </p>
+    <div className="flex flex-1 min-h-0 rounded-[20px] border border-line bg-surface shadow-xs overflow-hidden">
+      {/* ── History Sidebar ── */}
+      {sidebarOpen && (
+        <ConversationSidebar
+          conversations={conversations}
+          activeId={activeConversationId}
+          loading={convLoading}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelect={(id) => void loadConversation(id)}
+          onDelete={(id) => void deleteConversation(id)}
+          onNewChat={startNewChat}
+        />
+      )}
+
+      {/* ── Main Chat Area ── */}
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        {/* ── Header ── */}
+        <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
+          <div className="flex items-center gap-3">
+            {/* History toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-brand transition-colors"
+              title={sidebarOpen ? 'Close history' : 'Open chat history'}
+            >
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-4.5 w-4.5" aria-hidden />
+              ) : (
+                <History className="h-4.5 w-4.5" aria-hidden />
+              )}
+            </button>
+
+            <img
+              src={botAvatarImg}
+              alt="Lumi"
+              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
+            />
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-ink">Lumi</h1>
+              <p className="text-xs sm:text-sm text-muted">
+                Lumi, your Let's Do! AI companion • Philippine Calendar aware 🇵🇭
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={startNewChat}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted hover:bg-surface-2 hover:text-ink transition-colors"
+                title="New chat"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                New Chat
+              </button>
+            )}
           </div>
         </div>
 
-        {messages.length > 0 && (
-          <button
-            type="button"
-            onClick={clearChat}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted hover:bg-surface-2 hover:text-ink transition-colors"
-            title="Clear conversation"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-            Clear
-          </button>
-        )}
-      </div>
+        {/* ── Scope Notice ── */}
+        <div className="shrink-0 bg-brand-tint border-b border-brand/20 px-6 py-2.5 text-xs sm:text-sm text-brand-deep">
+          💚 <strong>Lumi</strong> is here for <strong>task planning, deadlines, syllabus breakdown, and schedule advice</strong>. Attach notes or files below!
+        </div>
 
-      {/* ── Scope Notice ── */}
-      <div className="shrink-0 bg-brand-tint border-b border-brand/20 px-6 py-2.5 text-xs sm:text-sm text-brand-deep">
-        💚 <strong>Lumi</strong> is here for <strong>task planning, deadlines, syllabus breakdown, and schedule advice</strong>. Attach notes or files below!
-      </div>
-
-      {/* ── Messages Stream (Only this section scrolls) ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 sm:px-6">
-        {isEmpty ? (
-          <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
-            <div className="flex items-center justify-center">
-              <img
-                src={botAvatarImg}
-                alt="Lumi, your Let's Do! AI companion"
-                className="h-32 w-32 object-contain drop-shadow-md animate-scale-in"
-              />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-ink">
-                Hi! I'm Lumi! Ready to make today productive? 💚
-              </h2>
-              <p className="mt-2 text-sm sm:text-base text-muted max-w-md leading-relaxed">
-                I'm here to remind you about deadlines, organize your schedule, celebrate your wins, and gently keep procrastination away!
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 w-full max-w-lg">
-              {STARTERS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => void handleSend(s)}
-                  className="rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm font-medium text-ink hover:border-brand/40 hover:bg-brand-soft transition-colors shadow-2xs"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-5 max-w-2xl mx-auto">
-            {messages.map((msg) => (
-              <Bubble
-                key={msg.id}
-                msg={msg}
-                onToggleDocIndex={(idx) => handleToggleDocIndex(msg.id, idx)}
-                onSelectAllDoc={() => handleSelectAllDoc(msg.id)}
-                onDeselectAllDoc={() => handleDeselectAllDoc(msg.id)}
-                onImportDoc={() => handleImportDoc(msg.id)}
-                onToggleScheduleIndex={(idx) => handleToggleScheduleIndex(msg.id, idx)}
-                onSelectAllSchedule={() => handleSelectAllSchedule(msg.id)}
-                onDeselectAllSchedule={() => handleDeselectAllSchedule(msg.id)}
-                onImportSchedule={() => handleImportSchedule(msg.id)}
-              />
-            ))}
-            {error && (
-              <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
-                {error}
-              </p>
-            )}
-            <div ref={bottomRef} />
+        {/* ── History Loading Overlay ── */}
+        {historyLoading && (
+          <div className="shrink-0 flex items-center gap-2 justify-center border-b border-line bg-surface/80 px-6 py-2 text-xs text-muted">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" />
+            Loading conversation…
           </div>
         )}
-      </div>
 
-      {/* ── Chat Input Bar with Paperclip ── */}
-      <div className="shrink-0 border-t border-line bg-surface px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
-          {/* File attachment preview chip */}
-          {attachedFile && (
-            <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-tint/60 px-4 py-2.5 text-sm">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <FileText className="h-4.5 w-4.5 text-brand shrink-0" aria-hidden />
-                <span className="truncate font-semibold text-brand-deep">
-                  {attachedFile.name}
-                </span>
-                <span className="shrink-0 text-xs text-muted">
-                  ({formatFileSize(attachedFile.size)})
-                </span>
+        {/* ── Messages Stream (Only this section scrolls) ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 sm:px-6">
+          {isEmpty ? (
+            <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+              <div className="flex items-center justify-center">
+                <img
+                  src={botAvatarImg}
+                  alt="Lumi, your Let's Do! AI companion"
+                  className="h-32 w-32 object-contain drop-shadow-md animate-scale-in"
+                />
               </div>
-              <button
-                type="button"
-                onClick={removeAttachedFile}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted hover:bg-brand/10 hover:text-ink transition-colors"
-                aria-label="Remove attached file"
-              >
-                <X className="h-3.5 w-3.5" aria-hidden />
-              </button>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-ink">
+                  Hi! I'm Lumi! Ready to make today productive? 💚
+                </h2>
+                <p className="mt-2 text-sm sm:text-base text-muted max-w-md leading-relaxed">
+                  I'm here to remind you about deadlines, organize your schedule, celebrate your wins, and gently keep procrastination away!
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 w-full max-w-lg">
+                {STARTERS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => void handleSend(s)}
+                    className="rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm font-medium text-ink hover:border-brand/40 hover:bg-brand-soft transition-colors shadow-2xs"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5 max-w-2xl mx-auto">
+              {messages.map((msg) => (
+                <Bubble
+                  key={msg.id}
+                  msg={msg}
+                  onToggleDocIndex={(idx) => handleToggleDocIndex(msg.id, idx)}
+                  onSelectAllDoc={() => handleSelectAllDoc(msg.id)}
+                  onDeselectAllDoc={() => handleDeselectAllDoc(msg.id)}
+                  onImportDoc={() => handleImportDoc(msg.id)}
+                  onToggleScheduleIndex={(idx) => handleToggleScheduleIndex(msg.id, idx)}
+                  onSelectAllSchedule={() => handleSelectAllSchedule(msg.id)}
+                  onDeselectAllSchedule={() => handleDeselectAllSchedule(msg.id)}
+                  onImportSchedule={() => handleImportSchedule(msg.id)}
+                />
+              ))}
+              {error && (
+                <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
+                  {error}
+                </p>
+              )}
+              <div ref={bottomRef} />
             </div>
           )}
+        </div>
 
-          {/* Input & Action buttons */}
-          <div className="flex items-end gap-2.5 sm:gap-3">
-            {/* Paperclip Button */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPTED_FILE_TYPES}
-              onChange={handleFileChange}
-              className="sr-only"
-              tabIndex={-1}
-              aria-hidden
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessing}
-              title="Attach syllabus or document (PDF, DOCX, TXT)"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-muted transition hover:border-brand/40 hover:bg-brand-soft hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40"
-              aria-label="Attach document"
-            >
-              <Paperclip className="h-4.5 w-4.5" aria-hidden />
-            </button>
+        {/* ── Chat Input Bar with Paperclip ── */}
+        <div className="shrink-0 border-t border-line bg-surface px-4 py-4 sm:px-6">
+          <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
+            {/* File attachment preview chip */}
+            {attachedFile && (
+              <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-tint/60 px-4 py-2.5 text-sm">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileText className="h-4.5 w-4.5 text-brand shrink-0" aria-hidden />
+                  <span className="truncate font-semibold text-brand-deep">
+                    {attachedFile.name}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">
+                    ({formatFileSize(attachedFile.size)})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeAttachedFile}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted hover:bg-brand/10 hover:text-ink transition-colors"
+                  aria-label="Remove attached file"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+            )}
 
-            {/* Textarea container */}
-            <div className="flex-1 rounded-xl border border-line bg-surface-2 px-4 py-2.5 focus-within:border-brand/60 focus-within:ring-2 focus-within:ring-brand/15 transition">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  attachedFile
-                    ? 'Add instructions for Lumi (e.g. prioritize quizzes)... or press Enter to analyze'
-                    : 'Ask Lumi about tasks, deadlines, or attach a document…'
-                }
-                rows={1}
-                maxLength={2000}
-                disabled={isProcessing}
-                className="block w-full resize-none bg-transparent text-base text-ink placeholder-muted outline-none disabled:opacity-50"
-                aria-label="Chat message"
+            {/* Input & Action buttons */}
+            <div className="flex items-end gap-2.5 sm:gap-3">
+              {/* Paperclip Button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_FILE_TYPES}
+                onChange={handleFileChange}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden
               />
-            </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+                title="Attach syllabus or document (PDF, DOCX, TXT)"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-muted transition hover:border-brand/40 hover:bg-brand-soft hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40"
+                aria-label="Attach document"
+              >
+                <Paperclip className="h-4.5 w-4.5" aria-hidden />
+              </button>
 
-            {/* Send Button */}
-            <button
-              type="button"
-              onClick={() => void handleSend()}
-              disabled={(!input.trim() && !attachedFile) || isProcessing}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Send message"
-            >
-              <Send className="h-4.5 w-4.5" aria-hidden />
-            </button>
+              {/* Textarea container */}
+              <div className="flex-1 rounded-xl border border-line bg-surface-2 px-4 py-2.5 focus-within:border-brand/60 focus-within:ring-2 focus-within:ring-brand/15 transition">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    attachedFile
+                      ? 'Add instructions for Lumi (e.g. prioritize quizzes)... or press Enter to analyze'
+                      : 'Ask Lumi about tasks, deadlines, or attach a document…'
+                  }
+                  rows={1}
+                  maxLength={2000}
+                  disabled={isProcessing}
+                  className="block w-full resize-none bg-transparent text-base text-ink placeholder-muted outline-none disabled:opacity-50"
+                  aria-label="Chat message"
+                />
+              </div>
+
+              {/* Send Button */}
+              <button
+                type="button"
+                onClick={() => void handleSend()}
+                disabled={(!input.trim() && !attachedFile) || isProcessing}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Send message"
+              >
+                <Send className="h-4.5 w-4.5" aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
       </div>

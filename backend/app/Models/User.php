@@ -99,4 +99,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class);
     }
+
+    /**
+     * A user owns many AI chat conversations with Lumi.
+     */
+    public function aiConversations(): HasMany
+    {
+        return $this->hasMany(AiConversation::class)->orderBy('updated_at', 'desc');
+    }
 }

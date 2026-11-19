@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AiConversation;
+use App\Models\AiMessage;
 use App\Services\DocumentExtractorService;
 use App\Services\GeminiService;
 use App\Services\PhilippineCalendarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AiController extends Controller
 {
@@ -118,6 +121,27 @@ class AiController extends Controller
             $created[] = $task;
         }
 
+        // If message_id provided, mark that message as imported in DB
+        $messageId = $request->input('message_id');
+        if ($messageId) {
+            $aiMessage = AiMessage::whereHas('conversation', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->find($messageId);
+
+            if ($aiMessage) {
+                if ($aiMessage->proposed_schedule) {
+                    $sched = $aiMessage->proposed_schedule;
+                    $sched['imported'] = true;
+                    $aiMessage->update(['proposed_schedule' => $sched]);
+                }
+                if ($aiMessage->extracted_doc) {
+                    $doc = $aiMessage->extracted_doc;
+                    $doc['imported'] = true;
+                    $aiMessage->update(['extracted_doc' => $doc]);
+                }
+            }
+        }
+
         return response()->json([
             'message' => count($created).' tasks imported successfully into your schedule.',
             'tasks' => $created,
@@ -125,13 +149,133 @@ class AiController extends Controller
     }
 
     /**
+     * List all chat conversations for the current user.
+     */
+    public function listConversations(Request $request): JsonResponse
+    {
+        $conversations = $request->user()->aiConversations()
+            ->withCount('messages')
+            ->with(['messages' => function ($query) {
+                $query->latest('created_at')->limit(1);
+            }])
+            ->get()
+            ->map(function ($conv) {
+                $latest = $conv->messages->first();
+                return [
+                    'id' => $conv->id,
+                    'title' => $conv->title,
+                    'updated_at' => $conv->updated_at,
+                    'created_at' => $conv->created_at,
+                    'messages_count' => $conv->messages_count,
+                    'preview' => $latest ? Str::limit($latest->text, 90) : null,
+                ];
+            });
+
+        return response()->json($conversations);
+    }
+
+    /**
+     * Create a new chat conversation.
+     */
+    public function createConversation(Request $request): JsonResponse
+    {
+        $conversation = $request->user()->aiConversations()->create([
+            'title' => $request->input('title', 'New Chat'),
+        ]);
+
+        return response()->json([
+            'id' => $conversation->id,
+            'title' => $conversation->title,
+            'created_at' => $conversation->created_at,
+            'updated_at' => $conversation->updated_at,
+            'messages' => [],
+        ], 201);
+    }
+
+    /**
+     * Get a specific conversation with all of its messages.
+     */
+    public function showConversation(Request $request, AiConversation $conversation): JsonResponse
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $messages = $conversation->messages()->get()->map(function ($msg) {
+            return [
+                'id' => (string) $msg->id,
+                'role' => $msg->role,
+                'text' => $msg->text,
+                'attachment' => $msg->attachment,
+                'extracted_doc' => $msg->extracted_doc,
+                'proposed_schedule' => $msg->proposed_schedule,
+                'timestamp' => $msg->created_at,
+            ];
+        });
+
+        return response()->json([
+            'id' => $conversation->id,
+            'title' => $conversation->title,
+            'created_at' => $conversation->created_at,
+            'updated_at' => $conversation->updated_at,
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Delete a conversation and its messages.
+     */
+    public function destroyConversation(Request $request, AiConversation $conversation): JsonResponse
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $conversation->delete();
+
+        return response()->json(['message' => 'Conversation deleted successfully.']);
+    }
+
+    /**
+     * Append a message to a conversation (e.g. document extraction result).
+     */
+    public function appendMessage(Request $request, AiConversation $conversation): JsonResponse
+    {
+        if ($conversation->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'role'              => ['required', 'string', 'in:user,model'],
+            'text'              => ['required', 'string'],
+            'attachment'        => ['nullable', 'array'],
+            'extracted_doc'     => ['nullable', 'array'],
+            'proposed_schedule' => ['nullable', 'array'],
+        ]);
+
+        $message = $conversation->messages()->create($validated);
+        $conversation->touch();
+
+        return response()->json([
+            'id' => (string) $message->id,
+            'role' => $message->role,
+            'text' => $message->text,
+            'attachment' => $message->attachment,
+            'extracted_doc' => $message->extracted_doc,
+            'proposed_schedule' => $message->proposed_schedule,
+            'timestamp' => $message->created_at,
+        ], 201);
+    }
+
+    /**
      * Secure AI chat — scoped to task management, jailbreak-protected.
-     * Accepts a message + optional conversation history.
+     * Accepts a message + optional conversation history & conversation_id.
      */
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'message'          => ['required', 'string', 'min:1', 'max:2000'],
+            'conversation_id'  => ['nullable', 'integer'],
             'history'          => ['nullable', 'array', 'max:30'],
             'history.*.role'   => ['required', 'string', 'in:user,model'],
             'history.*.text'   => ['required', 'string', 'max:10000'],
@@ -140,13 +284,78 @@ class AiController extends Controller
         $user    = $request->user();
         $message = trim($validated['message']);
         $history = $validated['history'] ?? [];
+        $conversationId = $validated['conversation_id'] ?? null;
+
+        // Find or create conversation
+        $conversation = null;
+        if ($conversationId) {
+            $conversation = $user->aiConversations()->find($conversationId);
+        }
+
+        if (! $conversation) {
+            $conversation = $user->aiConversations()->create([
+                'title' => 'New Chat',
+            ]);
+        }
+
+        // Save User Message to DB
+        $userMsg = $conversation->messages()->create([
+            'role' => 'user',
+            'text' => $message,
+        ]);
+
+        // If history wasn't passed from frontend, load recent history from conversation
+        if (empty($history) && $conversation) {
+            $history = $conversation->messages()
+                ->where('id', '!=', $userMsg->id)
+                ->latest('created_at')
+                ->limit(10)
+                ->get()
+                ->reverse()
+                ->map(fn($m) => ['role' => $m->role, 'text' => $m->text])
+                ->values()
+                ->toArray();
+        }
 
         $result = $this->gemini->chat($message, $history, $user);
 
+        // Prepare proposed_schedule JSON if tasks exist
+        $proposedScheduleData = null;
+        if (! empty($result['proposed_tasks'])) {
+            $proposedScheduleData = [
+                'tasks' => $result['proposed_tasks'],
+                'selectedIndices' => array_keys($result['proposed_tasks']),
+                'imported' => false,
+            ];
+        }
+
+        // Save Lumi Model Message to DB
+        $aiMsg = $conversation->messages()->create([
+            'role' => 'model',
+            'text' => $result['reply'],
+            'proposed_schedule' => $proposedScheduleData,
+        ]);
+
+        // Auto-generate title if it's currently "New Chat"
+        if ($conversation->title === 'New Chat') {
+            $words = preg_split('/\s+/', $message);
+            $shortTitle = implode(' ', array_slice($words, 0, 5));
+            $cleanTitle = Str::limit(trim(preg_replace('/[^\w\s\-\,\.\?\!]/u', '', $shortTitle)), 40);
+            if (! empty($cleanTitle)) {
+                $conversation->update(['title' => $cleanTitle]);
+            }
+        }
+
+        $conversation->touch();
+
         return response()->json([
-            'reply'          => $result['reply'],
-            'proposed_tasks' => $result['proposed_tasks'] ?? null,
-            'blocked'        => $result['blocked'],
+            'reply'             => $result['reply'],
+            'proposed_tasks'    => $result['proposed_tasks'] ?? null,
+            'blocked'           => $result['blocked'],
+            'conversation_id'   => $conversation->id,
+            'user_message_id'   => (string) $userMsg->id,
+            'ai_message_id'     => (string) $aiMsg->id,
+            'title'             => $conversation->title,
         ]);
     }
 
