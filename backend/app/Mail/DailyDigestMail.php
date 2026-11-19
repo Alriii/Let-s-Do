@@ -96,8 +96,12 @@ class DailyDigestMail extends Mailable
         return new Content(
             htmlString: "
                 <div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;'>
-                    <div style='display: flex; align-items: center; gap: 8px; margin-bottom: 16px;'>
-                        <span style='font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;'>Let's Do!</span>
+                    <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 20px;'>
+                        <img src='https://raw.githubusercontent.com/Alriii/Let-s-Do/main/frontend/src/assets/bot-avatar.png' alt='Lumi' width='44' height='44' style='border-radius: 50%; border: 2px solid #DDF3E5; display: inline-block;' />
+                        <div>
+                            <div style='font-size: 18px; font-weight: 800; color: #174A32; letter-spacing: -0.02em;'>Let's Do!</div>
+                            <div style='font-size: 11px; font-weight: 700; color: #45AA70; text-transform: uppercase; letter-spacing: 0.05em;'>Lumi &bull; Daily Schedule Digest</div>
+                        </div>
                     </div>
 
                     <h2 style='color:#0f172a; font-size: 20px; font-weight: 700; margin: 0 0 8px;'>Good morning, {$name}!</h2>
