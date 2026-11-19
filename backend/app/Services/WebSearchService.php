@@ -6,19 +6,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Service that provides live internet search capabilities for Lumi.
- * Allows Lumi to check real-world closing/opening hours of malls, businesses,
- * transit schedules, event dates, hotel & staycation availability, and other
- * schedule-related information the user needs to plan their day.
- */
+// searches web using duckduckgo html
 class WebSearchService
 {
     private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-    /**
-     * Keywords that suggest the user needs real-world live information.
-     */
+    // patterns to check if message needs search
     private const SCHEDULE_INTENT_PATTERNS = [
         '/\b(mall|store|shop|branch|office|bank|embassy|clinic|hospital|gym|market|supermarket)\s+(hours?|schedule|closing|opening|time)\b/i',
         '/\bwhat\s+time\s+does\s+.*(open|close|start|end)\b/i',
@@ -62,9 +55,7 @@ class WebSearchService
         '/\b(11\.11|12\.12|mega\s*sale|flash\s*sale|payday\s*sale)\b/i',
     ];
 
-    /**
-     * Check if the user's message warrants a live web search.
-     */
+    // check if we should search
     public function shouldSearch(string $message): bool
     {
         foreach (self::SCHEDULE_INTENT_PATTERNS as $pattern) {
@@ -76,12 +67,7 @@ class WebSearchService
         return false;
     }
 
-    /**
-     * Perform a live web search and return the top text snippets.
-     * Results are cached for 1 hour to prevent redundant external queries.
-     *
-     * @return array<int, array{title: string, snippet: string, url: string}>
-     */
+    // search duckduckgo
     public function search(string $query, int $maxResults = 4): array
     {
         $cleanQuery = trim(preg_replace('/[^\w\s\-\.\,\?\!]/u', ' ', $query));
@@ -96,16 +82,14 @@ class WebSearchService
         });
     }
 
-    /**
-     * Generate prompt context string for Gemini with live search results.
-     */
+    // get search context for prompt
     public function getPromptContext(string $userMessage): ?string
     {
         if (! $this->shouldSearch($userMessage)) {
             return null;
         }
 
-        // Clean query: strip conversational filler words
+        // clean query
         $query = preg_replace('/^(can\s+you\s+(check|search|find)|please\s+(check|search)|what\s+is|tell\s+me)\s+/i', '', trim($userMessage));
         $query = rtrim($query, '?.,!');
 
@@ -126,9 +110,7 @@ class WebSearchService
         return implode("\n", $lines);
     }
 
-    /**
-     * Scrape top snippets from DuckDuckGo HTML version.
-     */
+    // scrape results from duckduckgo html
     private function fetchFromWeb(string $query, int $maxResults): array
     {
         try {
@@ -147,8 +129,7 @@ class WebSearchService
             $html = $response->body();
             $results = [];
 
-            // Match result blocks: <a class="result__snippet" ...>...</a>
-            // and titles: <a class="result__url" ...> or <h2 class="result__title">
+            // get result snippets and titles
             preg_match_all(
                 '/<h2[^>]*class="result__title"[^>]*>.*?<a[^>]*class="result__url"[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>.*?<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/si',
                 $html,

@@ -13,27 +13,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
-/**
- * Controller handling user-scoped task operations:
- * List, Filter, Create, Show, Update, Complete, Cancel, Delete, Calendar.
- */
+// task controller
 class TaskController extends Controller
 {
     public function __construct(
         private PhilippineCalendarService $calendarSvc,
     ) {}
-    /**
-     * Allowed values, mirrored from the Figma task form.
-     */
+
     private const CATEGORIES = ['Work', 'Personal', 'Health', 'Errands'];
-
     private const PRIORITIES = ['Low', 'Medium', 'High'];
-
     private const STATUSES = ['pending', 'completed', 'cancelled'];
 
-    /**
-     * List and filter tasks belonging to the authenticated user.
-     */
+    // get tasks with filters
     public function index(Request $request): JsonResponse
     {
         $filters = $request->validate([
@@ -49,7 +40,7 @@ class TaskController extends Controller
 
         $query = $request->user()->tasks();
 
-        // 1. Search keyword (in title or notes)
+        // search keyword
         if (! empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('title', 'like', "%{$filters['search']}%")
@@ -57,14 +48,14 @@ class TaskController extends Controller
             });
         }
 
-        // 2. Exact-match filters
+        // filters
         foreach (['category', 'priority', 'status', 'date'] as $field) {
             if (! empty($filters[$field])) {
                 $query->where($field === 'date' ? 'due_date' : $field, $filters[$field]);
             }
         }
 
-        // 3. Inclusive date range (used by Pending Actions / week views)
+        // date range
         if (! empty($filters['due_after'])) {
             $query->where('due_date', '>=', $filters['due_after']);
         }
@@ -78,9 +69,7 @@ class TaskController extends Controller
         return $this->paginatedResponse($query, $request);
     }
 
-    /**
-     * Create a new task for the authenticated user.
-     */
+    // create new task
     public function store(CreateTaskRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -95,7 +84,6 @@ class TaskController extends Controller
             $validated['start_time'] = $validated['due_time'];
         }
 
-        // Ensure user_id is forced to the authenticated user and status starts as pending
         $task = $request->user()->tasks()->create(array_merge($validated, [
             'status' => 'pending',
             'reminders_sent' => 0,
@@ -107,9 +95,7 @@ class TaskController extends Controller
         ], 201);
     }
 
-    /**
-     * Retrieve a specific task (must belong to authenticated user).
-     */
+    // get single task
     public function show(Request $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -119,9 +105,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Update permitted fields of an owned task.
-     */
+    // update task
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -142,9 +126,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Mark a task as completed.
-     */
+    // mark completed
     public function complete(Request $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -163,9 +145,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Cancel a task with a required reason and optional details.
-     */
+    // cancel task
     public function cancel(CancelTaskRequest $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -184,9 +164,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Reopen a completed or cancelled task back to pending.
-     */
+    // reopen task
     public function reopen(Request $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -206,9 +184,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Delete a task.
-     */
+    // delete task
     public function destroy(Request $request, Task $task): JsonResponse
     {
         $this->authorizeTask($request, $task);
@@ -220,10 +196,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * List upcoming pending tasks due after today, with the three summary
-     * metrics shown on the Figma Upcoming screen.
-     */
+    // upcoming tasks
     public function upcoming(Request $request): JsonResponse
     {
         $today = now()->toDateString();
@@ -247,9 +220,7 @@ class TaskController extends Controller
         return $this->paginatedResponse($query, $request, ['summary' => $summary]);
     }
 
-    /**
-     * List completed tasks history.
-     */
+    // completed tasks history
     public function completed(Request $request): JsonResponse
     {
         $query = $request->user()->tasks()
@@ -259,15 +230,12 @@ class TaskController extends Controller
         return $this->paginatedResponse($query, $request);
     }
 
-    /**
-     * Per-day task counts + Philippine holiday info for the calendar widget (month view).
-     * Days without tasks are still included if they are holidays.
-     */
+    // month calendar view with holidays
     public function calendar(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'month'   => ['nullable', 'date_format:Y-m'],
-            'country' => ['nullable', 'string', 'max:10'], // e.g. 'PH'
+            'country' => ['nullable', 'string', 'max:10'],
         ]);
 
         $month = $validated['month'] ?? now()->format('Y-m');
@@ -307,7 +275,7 @@ class TaskController extends Controller
             }
         }
 
-        // Overlay Philippine holidays for PH users (or any user requesting PH)
+        // add holidays for PH
         if ($country === 'PH') {
             $cursor = $start->copy();
             while ($cursor->lte($end)) {
@@ -325,7 +293,7 @@ class TaskController extends Controller
                     ];
                     $days[$iso]['holiday'] = [
                         'name' => $holiday['name'],
-                        'type' => $holiday['type'], // 'regular' | 'special'
+                        'type' => $holiday['type'],
                     ];
                 }
 
@@ -343,11 +311,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    /**
-     * Serialize a paginated task query with a stable response shape.
-     *
-     * @param  array<string, mixed>  $extra
-     */
+    // pagination helper
     protected function paginatedResponse(HasMany $query, Request $request, array $extra = []): JsonResponse
     {
         $perPage = $request->integer('per_page') ?: 50;
@@ -369,9 +333,7 @@ class TaskController extends Controller
         ], $extra), 200);
     }
 
-    /**
-     * Enforce strict user ownership. Returns 404 if the task does not belong to the user.
-     */
+    // check if task belongs to user
     protected function authorizeTask(Request $request, Task $task): void
     {
         if ($task->user_id !== $request->user()->id) {

@@ -1,9 +1,6 @@
-# -----------------------------------------------------------------------------
-# Production Dockerfile for Laravel Backend (Render Deployment)
-# -----------------------------------------------------------------------------
 FROM php:8.4-apache
 
-# Install required system packages, image libraries for GD, and PostgreSQL development libraries
+# install packages and extensions
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
@@ -25,37 +22,29 @@ RUN apt-get update && apt-get install -y \
     gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Point Apache DocumentRoot directly to Laravel's public directory
+# point apache to public folder
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Enable Apache mod_rewrite for Laravel API routing
 RUN a2enmod rewrite
 
-# Copy Composer binary from official Composer image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
 COPY . /var/www/html
 
-# Ensure entrypoint script is executable and has Unix line endings
 RUN sed -i 's/\r$//' /var/www/html/docker/entrypoint.sh \
     && chmod +x /var/www/html/docker/entrypoint.sh
 
-# Install production dependencies without running artisan scripts during build
-# (Scripts will run at container startup when environment variables are present)
+# install composer packages
 RUN composer install --no-dev --no-scripts --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# Set proper permissions for Laravel writable directories
+# permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose default HTTP port
 EXPOSE 80
 
-# Configure entrypoint and startup command
 ENTRYPOINT ["/var/www/html/docker/entrypoint.sh"]
 CMD ["apache2-foreground"]

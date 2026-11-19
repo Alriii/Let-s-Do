@@ -1,19 +1,19 @@
 #!/bin/sh
 set -e
 
-# Support Render dynamic port assignment ($PORT)
+# set port
 if [ -n "$PORT" ]; then
     sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf
     sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf
 fi
 
-# Discover packages and cache config if in production
+# discover packages
 php artisan package:discover --ansi || true
 
-# Apply any pending schema changes (idempotent; required for new columns)
+# run migrations
 php artisan migrate --force --no-interaction
 
-# Public disk symlink so uploaded avatars are reachable at /storage/*
+# storage link
 php artisan storage:link || true
 
 if [ -n "$APP_KEY" ]; then
@@ -22,8 +22,8 @@ if [ -n "$APP_KEY" ]; then
     php artisan view:cache || true
 fi
 
-# Start background scheduler for automated task reminder emails
+# start scheduler
 php artisan schedule:work > /dev/null 2>&1 &
 
-# Execute main container process
+# start server
 exec "$@"

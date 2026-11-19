@@ -122,7 +122,7 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                 >
                   {date.getDate()}
 
-                  {/* Dot row: tasks dot + holiday dot */}
+                  {/* dots */}
                   {(hasTasks || (holiday && inMonth)) && (
                     <span className="absolute bottom-[3px] flex items-center gap-[3px]">
                       {hasTasks && (

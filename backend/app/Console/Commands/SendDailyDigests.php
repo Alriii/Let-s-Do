@@ -9,15 +9,12 @@ use App\Services\GeminiService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
-/**
- * Sends the "Daily Schedule Digest" email at 08:00 to every user who
- * enabled the preference in the Figma Preferences screen.
- */
+// command to send daily morning email digest
 class SendDailyDigests extends Command
 {
     protected $signature = 'tasks:send-daily-digest';
 
-    protected $description = 'Send the morning schedule digest with AI holiday context to opted-in users';
+    protected $description = 'Send morning email digest';
 
     public function handle(GeminiService $gemini): int
     {

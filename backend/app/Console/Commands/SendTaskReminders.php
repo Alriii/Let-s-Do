@@ -9,24 +9,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-/**
- * Artisan command to process and dispatch task reminder emails.
- * Runs every minute via the Laravel scheduler.
- * Supports customizable reminder frequencies (e.g. every 5 minutes),
- * target anchors (start time vs end time / deadline), and multiple alerts.
- */
+// command to send task reminders
 class SendTaskReminders extends Command
 {
     protected $signature = 'tasks:send-reminders';
 
-    protected $description = 'Send automated email reminders for upcoming tasks and impending deadlines';
+    protected $description = 'Send email reminders for tasks';
 
     public function handle(): int
     {
         $now = now();
         $todayStr = $now->toDateString();
 
-        // 1. Fetch pending tasks due today belonging to users who have reminders enabled
+        // get pending tasks for today with reminders turned on
         $tasks = Task::with('user')
             ->where('status', 'pending')
             ->where('due_date', $todayStr)
@@ -41,7 +36,7 @@ class SendTaskReminders extends Command
                 continue;
             }
 
-            // Determine which time anchor to use
+            // check start or end time anchor
             $targetAnchor = $task->reminder_target ?: 'start_time';
             $timeString = null;
 
@@ -63,18 +58,17 @@ class SendTaskReminders extends Command
                 continue;
             }
 
-            // Avoid sending reminders for tasks that are already > 5 minutes in the past
+            // skip past tasks
             if ($now->greaterThan($targetDateTime->copy()->addMinutes(5))) {
                 continue;
             }
 
-            // Cooldown check: do not send more than once in 45 seconds for the same task
+            // cooldown 45s
             if ($task->last_reminder_sent_at && $task->last_reminder_sent_at->diffInSeconds($now) < 45) {
                 continue;
             }
 
             if ($task->reminder_enabled) {
-                // Customized task reminder flow (e.g. 3 reminders every 5 minutes before task)
                 $maxReminders = max(1, (int) ($task->reminder_count ?: 3));
                 $intervalMinutes = max(1, (int) ($task->reminder_interval_minutes ?: 5));
                 $remindersSent = (int) ($task->reminders_sent ?: 0);
@@ -83,12 +77,6 @@ class SendTaskReminders extends Command
                     continue;
                 }
 
-                // Threshold: The next reminder should be dispatched when the remaining
-                // time until target is <= (maxReminders - remindersSent) * intervalMinutes.
-                // e.g. for max=3, interval=5:
-                // sent=0 => remaining <= 15 mins (trigger reminder 1)
-                // sent=1 => remaining <= 10 mins (trigger reminder 2)
-                // sent=2 => remaining <= 5 mins (trigger reminder 3)
                 $remainingSlots = $maxReminders - $remindersSent;
                 $triggerThresholdMinutes = $remainingSlots * $intervalMinutes;
                 $triggerTime = $targetDateTime->copy()->subMinutes($triggerThresholdMinutes);

@@ -14,10 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-/**
- * User Model
- * Represents a registered user in Let's Do!
- */
+// user model
 #[Fillable([
     'name',
     'email',
@@ -31,14 +28,8 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -49,20 +40,13 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Public URL for the user's uploaded avatar, if one exists.
-     * Prefers base64 data URL (avatar_data) which is persistent across
-     * container restarts — falls back to file-based avatar_path for
-     * backwards compatibility with any existing local uploads.
-     */
+    // get avatar url or base64 data
     public function avatarUrl(): ?string
     {
-        // Prefer base64 data URL — works on Render/any ephemeral host
         if ($this->avatar_data) {
             return $this->avatar_data;
         }
 
-        // Legacy: file-based path (local dev only)
         if (! $this->avatar_path) {
             return null;
         }
@@ -73,17 +57,12 @@ class User extends Authenticatable
         return $disk->url($this->avatar_path);
     }
 
-    /**
-     * Accessor for avatar_url so $user->avatar_url works seamlessly.
-     */
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->avatarUrl();
     }
 
-    /**
-     * Get the user's clean first name for greetings and notifications.
-     */
+    // get first name for greetings
     public function getFirstNameAttribute(): string
     {
         $raw = trim($this->name ?: '');
@@ -116,17 +95,11 @@ class User extends Authenticatable
         return ucfirst(strtolower($lettersOnly ?: $raw));
     }
 
-    /**
-     * A user owns many tasks.
-     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
-    /**
-     * A user owns many AI chat conversations with Lumi.
-     */
     public function aiConversations(): HasMany
     {
         return $this->hasMany(AiConversation::class)->orderBy('updated_at', 'desc');

@@ -6,18 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Task Model
- * Represents a task owned by a user in the Let's Do! application.
- */
+// task model
 class Task extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     * Note: 'user_id', 'status', and 'completed_at' are controlled server-side.
-     */
     protected $fillable = [
         'user_id',
         'title',
@@ -42,11 +35,6 @@ class Task extends Model
         'last_reminder_sent_at',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -62,9 +50,7 @@ class Task extends Model
         ];
     }
 
-    /**
-     * Reset the reminder state whenever a task is rescheduled or reminder settings change.
-     */
+    // reset reminder count if task is rescheduled
     protected static function booted(): void
     {
         static::updating(function (Task $task): void {
@@ -87,9 +73,6 @@ class Task extends Model
         });
     }
 
-    /**
-     * Every task belongs to exactly one user.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

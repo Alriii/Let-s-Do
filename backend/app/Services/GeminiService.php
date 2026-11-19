@@ -8,10 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-/**
- * Service encapsulating Google Gemini API integration with multi-model fallback,
- * Philippine localization, and structured JSON parsing.
- */
+// gemini service
 class GeminiService
 {
     private const MODELS = [
@@ -38,9 +35,7 @@ class GeminiService
         $this->webSearch = $webSearch;
     }
 
-    /**
-     * Send a generation request with fallback over available fast models.
-     */
+    // call gemini api
     public function generateContent(string $prompt, ?string $systemInstruction = null, bool $jsonMode = false): ?string
     {
         if (empty($this->apiKey)) {
@@ -87,7 +82,7 @@ class GeminiService
                     }
                 }
 
-                // If 503 or model busy, log and try next model in list
+                // try next model if failed
                 Log::info("Gemini model {$model} returned {$response->status()}, attempting next fallback model.");
             } catch (\Throwable $e) {
                 Log::warning("Gemini model {$model} exception: {$e->getMessage()}");
@@ -97,22 +92,20 @@ class GeminiService
         return null;
     }
 
-    /**
-     * Generate dynamic holiday and schedule advice tailored to the user.
-     */
+    // daily holiday briefing
     public function generateHolidayBriefing(User $user, ?Carbon $now = null): array
     {
         $now = $now ?: now();
         $firstName = $user->first_name ?: 'there';
 
-        // Check Philippine Calendar
+        // holiday check
         $todayHoliday = $this->calendar->getTodayHoliday($now);
         $tomorrowHoliday = $this->calendar->getTomorrowHoliday($now);
         $upcomingHolidays = $this->calendar->getUpcomingHolidays(7, $now);
         $longWeekend = $this->calendar->getLongWeekendInfo($now);
         $calContext = $this->calendar->getPromptContext($now);
 
-        // Fetch user tasks summary
+        // get task counts
         $pendingToday = $user->tasks()
             ->where('status', 'pending')
             ->where('due_date', $now->toDateString())
@@ -172,7 +165,7 @@ Return ONLY valid JSON matching this exact structure:
             }
         }
 
-        // Fallback if AI is offline
+        // fallback if AI is offline
         if ($tomorrowHoliday) {
             return [
                 'headline' => "🌴 Tomorrow is {$tomorrowHoliday['name']}!",
@@ -202,10 +195,7 @@ Return ONLY valid JSON matching this exact structure:
         ];
     }
 
-    /**
-     * Feed user notes, syllabus, course announcements, or project rubrics to AI,
-     * and extract actionable, scheduled tasks with Philippine holiday awareness.
-     */
+    // extract tasks from notes or syllabus
     public function parseSyllabusOrNotes(string $rawText, ?Carbon $currentDate = null): array
     {
         $now = $currentDate ?: now();
@@ -287,7 +277,7 @@ Return ONLY valid JSON matching this schema:
         return $decoded;
     }
 
-    // ─── Jailbreak / injection patterns ──────────────────────────────────────
+    // prompt injection keywords
     private const BLOCKED_PATTERNS = [
         '/ignore\s+(all\s+)?(previous|prior|above|earlier)\s+instructions?/i',
         '/you\s+are\s+now\s+/i',
@@ -307,9 +297,7 @@ Return ONLY valid JSON matching this schema:
         '/config\s*\(\s*[\'"]services/i',
     ];
 
-    /**
-     * Check if a user message contains jailbreak / injection attempts.
-     */
+    // check if prompt is safe
     private function isBlocked(string $message): bool
     {
         foreach (self::BLOCKED_PATTERNS as $pattern) {
@@ -321,14 +309,7 @@ Return ONLY valid JSON matching this schema:
         return false;
     }
 
-    /**
-     * The locked-down system prompt for the AI chat feature.
-     * Never sent to the client.
-     */
-    /**
-     * The locked-down system prompt for the AI chat feature.
-     * Never sent to the client.
-     */
+    // system prompt for lumi
     private function chatSystemPrompt(?string $userMessage = null): string
     {
         $calContext     = $this->calendar->getPromptContext();
@@ -416,13 +397,10 @@ You are Lumi — a dedicated, witty, and caring productivity companion.
 PROMPT;
     }
 
-    /**
-     * Chat with the AI assistant, scoped strictly to task management.
-     * Accepts a conversation history array of ['role' => 'user|model', 'text' => '...'].
-     */
+    // chat with lumi
     public function chat(string $userMessage, array $history = [], ?User $user = null): array
     {
-        // 1. Jailbreak check
+        // safety check
         if ($this->isBlocked($userMessage)) {
             return [
                 'reply' => "I'm Lumi, your Let's Do! companion! 🌱 I'm here to help with your tasks, schedule, and productivity. What can we tackle today? 💚",
@@ -430,10 +408,9 @@ PROMPT;
             ];
         }
 
-        // 2. Build conversation contents
+        // add chat history
         $contents = [];
 
-        // Inject prior turns (max 10 for context window efficiency)
         $recentHistory = array_slice($history, -10);
         foreach ($recentHistory as $turn) {
             $role = ($turn['role'] === 'model') ? 'model' : 'user';
@@ -443,7 +420,7 @@ PROMPT;
             ];
         }
 
-        // Current user message
+        // current user message
         $contents[] = [
             'role' => 'user',
             'parts' => [['text' => $userMessage]],
@@ -470,17 +447,17 @@ PROMPT;
                     if (! empty($text)) {
                         $proposedTasks = null;
 
-                        // Check for ```json:tasks or ```json block
+                        // check for task json
                         if (preg_match('/```(?:json:tasks|json)?\s*(\[\s*\{.*?\}\s*\])\s*```/s', $text, $matches)) {
                             $decoded = json_decode($matches[1], true);
                             if (is_array($decoded) && ! empty($decoded)) {
                                 $proposedTasks = $decoded;
-                                // Strip json block from visible conversational text
+                                // remove json block from chat reply
                                 $text = str_replace($matches[0], '', $text);
                             }
                         }
 
-                        // Clean up any accidental leading asterisk or hyphen bullets
+                        // fix bullet formatting
                         $cleanedText = preg_replace('/^\s*[\*\-]\s+/m', '✨ ', trim($text));
 
                         return [
@@ -503,10 +480,7 @@ PROMPT;
         ];
     }
 
-    /**
-     * Quick natural language parser for a single task sentence.
-     * E.g. "submit HCI prototype tomorrow at 3pm to 4:30pm high priority"
-     */
+    // parse quick task string
     public function quickParseTask(string $sentence, ?Carbon $now = null): ?array
     {
         $now = $now ?: now();
@@ -549,10 +523,7 @@ Return strictly JSON:
         return null;
     }
 
-    /**
-     * Multimodal document transcription using Gemini's vision/PDF support.
-     * Transcribes plain text, guidelines, instructions, and dates from scanned/image PDFs.
-     */
+    // read pdf or image text with gemini
     public function transcribeDocument(UploadedFile $file): ?string
     {
         if (empty($this->apiKey)) {

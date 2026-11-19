@@ -27,8 +27,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { useAuth } from '../stores/auth';
 import botAvatarImg from '../assets/bot-avatar.png';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
+// types
 interface ExtractedDocData {
   fileName: string;
   fileSize: number;
@@ -103,14 +102,9 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 }
 
-/**
- * Format message text with rich styling:
- * - Converts markdown **bold** into <strong> elements (eliminating literal asterisks).
- * - Converts stray leading * or - bullet points into neat sparkle emojis.
- * - Preserves emojis, spacing, and paragraph line breaks.
- */
+// formats text with bolding
 function renderFormattedText(text: string) {
-  // Replace accidental leading bullet asterisks or hyphens
+  // change asterisks or hyphens to sparkle emoji
   const sanitized = text
     .replace(/^\s*[\*\-]\s+/gm, '✨ ')
     .replace(/\n\s*[\*\-]\s+/g, '\n✨ ');
@@ -145,8 +139,7 @@ function renderFormattedText(text: string) {
   });
 }
 
-// ─── Task Card inside Chat Bubble ─────────────────────────────────────────────
-
+// task card
 function ChatTaskCard({
   task,
   selected,
@@ -233,8 +226,7 @@ function ChatTaskCard({
   );
 }
 
-// ─── Inline Review & Schedule Component in Chat ───────────────────────────────
-
+// review tasks extracted from file
 function ExtractedScheduleReview({
   doc,
   onToggleIndex,
@@ -346,8 +338,7 @@ function ExtractedScheduleReview({
   );
 }
 
-// ─── Proposed Schedule Confirmation (Lumi directly suggests a schedule) ───────
-
+// schedule confirmation card
 function ProposedScheduleConfirmation({
   schedule,
   onToggleIndex,
@@ -436,8 +427,7 @@ function ProposedScheduleConfirmation({
   );
 }
 
-// ─── Inline Processing Bubble (Replacing separate tabs/modals) ───────────────
-
+// loading status
 function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: string }) {
   const stepsMeta = [
     { id: 'reading_file', label: 'Reading Document' },
@@ -491,8 +481,7 @@ function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: str
   );
 }
 
-// ─── Message Bubble Component ─────────────────────────────────────────────────
-
+// chat message bubble
 function Bubble({
   msg,
   onToggleDocIndex,
@@ -597,8 +586,7 @@ function Bubble({
   );
 }
 
-// ─── Conversation Sidebar ─────────────────────────────────────────────────────
-
+// chat history sidebar
 function ConversationSidebar({
   conversations,
   activeId,
@@ -719,8 +707,7 @@ function ConversationSidebar({
   );
 }
 
-// ─── Main AI Chat Page ────────────────────────────────────────────────────────
-
+// main chat page
 export function AiChatPage() {
   const toast = useToast();
   const queryClient = useQueryClient();

@@ -4,16 +4,10 @@ namespace App\Services;
 
 use Carbon\Carbon;
 
-/**
- * Service providing accurate Philippine National Regular and Special Non-Working Holidays,
- * long weekend detection, and prompt-ready context for the AI.
- */
+// philippine holidays service
 class PhilippineCalendarService
 {
-    /**
-     * Standard fixed Philippine Holidays.
-     * Types: 'regular' (Regular Holiday), 'special' (Special Non-Working Day).
-     */
+    // fixed holidays
     private const FIXED_HOLIDAYS = [
         '01-01' => ['name' => "New Year's Day", 'type' => 'regular'],
         '01-02' => ['name' => 'Special Non-Working Day', 'type' => 'special'],
@@ -32,9 +26,7 @@ class PhilippineCalendarService
         '12-31' => ['name' => "Last Day of the Year (New Year's Eve)", 'type' => 'special'],
     ];
 
-    /**
-     * Movable holidays for 2026 (Holy Week, National Heroes Day, Eid'l Fitr, Eid'l Adha).
-     */
+    // movable holidays for 2026
     private const MOVABLE_HOLIDAYS_2026 = [
         '2026-03-20' => ['name' => "Eid'l Fitr", 'type' => 'regular'],
         '2026-04-02' => ['name' => 'Maundy Thursday', 'type' => 'regular'],
@@ -44,16 +36,14 @@ class PhilippineCalendarService
         '2026-08-31' => ['name' => 'National Heroes Day', 'type' => 'regular'],
     ];
 
-    /**
-     * Check if a specific date is a Philippine holiday.
-     */
+    // check if date is holiday
     public function getHoliday(Carbon|string $date): ?array
     {
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
         $fullDate = $carbon->format('Y-m-d');
         $md = $carbon->format('m-d');
 
-        // Check movable 2026 holidays
+        // check movable
         if (isset(self::MOVABLE_HOLIDAYS_2026[$fullDate])) {
             return array_merge(self::MOVABLE_HOLIDAYS_2026[$fullDate], [
                 'date' => $fullDate,
@@ -62,7 +52,7 @@ class PhilippineCalendarService
             ]);
         }
 
-        // Check fixed holidays
+        // check fixed
         if (isset(self::FIXED_HOLIDAYS[$md])) {
             return array_merge(self::FIXED_HOLIDAYS[$md], [
                 'date' => $fullDate,
@@ -74,27 +64,21 @@ class PhilippineCalendarService
         return null;
     }
 
-    /**
-     * Check if tomorrow is a Philippine holiday.
-     */
+    // check tomorrow
     public function getTomorrowHoliday(?Carbon $now = null): ?array
     {
         $now = $now ?: now();
         return $this->getHoliday($now->copy()->addDay());
     }
 
-    /**
-     * Check if today is a Philippine holiday.
-     */
+    // check today
     public function getTodayHoliday(?Carbon $now = null): ?array
     {
         $now = $now ?: now();
         return $this->getHoliday($now);
     }
 
-    /**
-     * Get upcoming holidays within the next N days.
-     */
+    // get upcoming holidays
     public function getUpcomingHolidays(int $daysAhead = 14, ?Carbon $now = null): array
     {
         $now = $now ?: now();
@@ -114,9 +98,7 @@ class PhilippineCalendarService
         return $upcoming;
     }
 
-    /**
-     * Check if an upcoming holiday forms a long weekend.
-     */
+    // check long weekend
     public function getLongWeekendInfo(?Carbon $now = null): ?array
     {
         $now = $now ?: now();
@@ -125,7 +107,7 @@ class PhilippineCalendarService
             $date = $now->copy()->addDays($i);
             $holiday = $this->getHoliday($date);
             if ($holiday) {
-                $dayOfWeek = $date->dayOfWeek; // 1 = Monday, 5 = Friday
+                $dayOfWeek = $date->dayOfWeek;
                 if ($dayOfWeek === Carbon::MONDAY || $dayOfWeek === Carbon::FRIDAY) {
                     return [
                         'holiday' => $holiday,
@@ -139,9 +121,7 @@ class PhilippineCalendarService
         return null;
     }
 
-    /**
-     * Build prompt context for AI describing upcoming Philippine holidays.
-     */
+    // context for prompt
     public function getPromptContext(?Carbon $now = null): string
     {
         $now = $now ?: now();

@@ -95,7 +95,7 @@ export interface CalendarDay {
   cancelled: number;
   holiday?: {
     name: string;
-    type: 'regular' | 'special'; // regular = red national holiday, special = amber non-working day
+    type: 'regular' | 'special'; // regular or special holiday
   } | null;
 }
 

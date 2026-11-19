@@ -30,7 +30,7 @@ export function todayISO(): string {
   return toISODate(new Date());
 }
 
-/** Parse YYYY-MM-DD as a local date (avoids UTC shifting the day). */
+// parse YYYY-MM-DD
 export function parseISODate(value: string): Date {
   const [year, month, day] = value.split('-').map(Number);
 
@@ -44,7 +44,7 @@ export function addDays(date: Date, days: number): Date {
   return copy;
 }
 
-/** Start of the ISO week (Monday). */
+// monday start
 export function startOfWeek(date: Date): Date {
   const copy = new Date(date);
   const day = copy.getDay();
@@ -125,7 +125,7 @@ export function monthGrid(month: string): Date[] {
 
 export const WEEKDAY_LABELS = WEEKDAYS_SHORT;
 
-/** Relative section label used by the Upcoming timeline. */
+// section label for upcoming page
 export function relativeDayLabel(value: string): string {
   const date = parseISODate(value);
   const today = new Date();
@@ -163,7 +163,7 @@ export function relativeDayLabel(value: string): string {
   return 'Beyond next week';
 }
 
-/** Group tasks by their due date, preserving chronological order. */
+// group tasks by date
 export function groupTasksByDate(tasks: Task[]): { date: string; tasks: Task[] }[] {
   const groups = new Map<string, Task[]>();
 

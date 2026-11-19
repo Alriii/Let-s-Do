@@ -3,7 +3,7 @@ function resolveBaseUrl(): string {
   if (!envUrl) {
     return 'http://127.0.0.1:8000/api/v1';
   }
-  // Automatically normalize e.g. "https://let-s-do.onrender.com" to ".../api/v1"
+  // add /api/v1 if missing
   if (!envUrl.includes('/api')) {
     return `${envUrl}/api/v1`;
   }
@@ -32,7 +32,7 @@ export class ApiError extends Error {
     this.data = data;
   }
 
-  /** First validation message, useful for inline form errors. */
+  // get first error message
   firstError(field?: string): string | null {
     if (field) {
       return this.errors[field]?.[0] ?? null;

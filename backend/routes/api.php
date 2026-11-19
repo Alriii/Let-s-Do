@@ -13,38 +13,33 @@ use Illuminate\Support\Facades\Route;
 | All routes in this file are automatically prefixed with "/api" by Laravel.
 */
 
-// ==========================================
-// 1. Public Authentication Routes
-// ==========================================
+// public auth routes
 Route::prefix('v1/auth')->group(function () {
-    // Register
     Route::post('/register', [AuthController::class, 'register'])
         ->middleware('throttle:auth-register');
 
-    // Email 6-Digit Code Verification
+    // email verification
     Route::post('/email/verify', [AuthController::class, 'verifyEmail'])
         ->middleware('throttle:auth-verify');
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
         ->middleware('throttle:auth-code');
 
-    // Login
+    // login
     Route::post('/login', [AuthController::class, 'login'])
         ->name('login')
         ->middleware('throttle:auth-login');
 
-    // Password Recovery
+    // password reset
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
         ->middleware('throttle:auth-code');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
         ->middleware('throttle:auth-verify');
 });
 
-// ==========================================
-// 2. Protected Routes (Requires Authentication)
-// ==========================================
+// protected routes
 Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
 
-    // --- User & Profile ---
+    // user & profile
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
@@ -53,15 +48,15 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::delete('/avatar', [AuthController::class, 'destroyAvatar']);
     });
 
-    // --- Dashboard Summary ---
+    // dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // --- Task Specific Views ---
+    // task views
     Route::get('/tasks/upcoming', [TaskController::class, 'upcoming']);
     Route::get('/tasks/completed', [TaskController::class, 'completed']);
     Route::get('/tasks/calendar', [TaskController::class, 'calendar']);
 
-    // --- Task Actions & CRUD ---
+    // task crud
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{task}', [TaskController::class, 'show']);
@@ -71,7 +66,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::patch('/tasks/{task}/reopen', [TaskController::class, 'reopen']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
 
-    // --- AI Knowledge, Philippine Calendar & Chat ---
+    // ai and lumi
     Route::prefix('ai')->group(function () {
         Route::get('/holiday-briefing', [\App\Http\Controllers\AiController::class, 'holidayBriefing']);
         Route::post('/extract-file',    [\App\Http\Controllers\AiController::class, 'extractFile']);
@@ -79,20 +74,19 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::post('/import-tasks',    [\App\Http\Controllers\AiController::class, 'importTasks']);
         Route::post('/quick-parse',     [\App\Http\Controllers\AiController::class, 'quickParse']);
 
-        // Chat Conversations & History
+        // conversations
         Route::get('/conversations', [\App\Http\Controllers\AiController::class, 'listConversations']);
         Route::post('/conversations', [\App\Http\Controllers\AiController::class, 'createConversation']);
         Route::get('/conversations/{conversation}', [\App\Http\Controllers\AiController::class, 'showConversation']);
         Route::delete('/conversations/{conversation}', [\App\Http\Controllers\AiController::class, 'destroyConversation']);
         Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\AiController::class, 'appendMessage']);
 
-        // Chat: 20 messages per minute per user
+        // chat
         Route::post('/chat', [\App\Http\Controllers\AiController::class, 'chat'])
             ->middleware('throttle:ai-chat');
     });
 });
 
-// Legacy / Default user check
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

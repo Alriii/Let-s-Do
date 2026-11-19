@@ -19,9 +19,7 @@ class AiController extends Controller
         private DocumentExtractorService $extractor,
     ) {}
 
-    /**
-     * Get dynamic holiday briefing & advice for dashboard.
-     */
+    // holiday briefing for dashboard
     public function holidayBriefing(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -36,9 +34,7 @@ class AiController extends Controller
         ]);
     }
 
-    /**
-     * Extract plain text from an uploaded document (PDF, DOCX, TXT).
-     */
+    // extract text from file upload
     public function extractFile(Request $request): JsonResponse
     {
         $file = $request->file('file');
@@ -75,9 +71,7 @@ class AiController extends Controller
         ]);
     }
 
-    /**
-     * Feed notes / syllabus to AI and parse into structured tasks.
-     */
+    // parse text into tasks
     public function parseNotes(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -89,9 +83,7 @@ class AiController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Bulk-import AI generated tasks directly into the user's schedule.
-     */
+    // save tasks to db
     public function importTasks(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -165,9 +157,7 @@ class AiController extends Controller
         ], 201);
     }
 
-    /**
-     * List all chat conversations for the current user.
-     */
+    // get all conversations
     public function listConversations(Request $request): JsonResponse
     {
         $conversations = $request->user()->aiConversations()
@@ -192,9 +182,7 @@ class AiController extends Controller
         return response()->json($conversations);
     }
 
-    /**
-     * Create a new chat conversation.
-     */
+    // start new conversation
     public function createConversation(Request $request): JsonResponse
     {
         $conversation = $request->user()->aiConversations()->create([
@@ -210,9 +198,7 @@ class AiController extends Controller
         ], 201);
     }
 
-    /**
-     * Get a specific conversation with all of its messages.
-     */
+    // get conversation messages
     public function showConversation(Request $request, AiConversation $conversation): JsonResponse
     {
         if ($conversation->user_id !== $request->user()->id) {
@@ -240,9 +226,7 @@ class AiController extends Controller
         ]);
     }
 
-    /**
-     * Delete a conversation and its messages.
-     */
+    // delete conversation
     public function destroyConversation(Request $request, AiConversation $conversation): JsonResponse
     {
         if ($conversation->user_id !== $request->user()->id) {
@@ -254,9 +238,7 @@ class AiController extends Controller
         return response()->json(['message' => 'Conversation deleted successfully.']);
     }
 
-    /**
-     * Append a message to a conversation (e.g. document extraction result).
-     */
+    // add message to conversation
     public function appendMessage(Request $request, AiConversation $conversation): JsonResponse
     {
         if ($conversation->user_id !== $request->user()->id) {
@@ -285,10 +267,7 @@ class AiController extends Controller
         ], 201);
     }
 
-    /**
-     * Secure AI chat — scoped to task management, jailbreak-protected.
-     * Accepts a message + optional conversation history & conversation_id.
-     */
+    // send message to lumi
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -304,7 +283,7 @@ class AiController extends Controller
         $history = $validated['history'] ?? [];
         $conversationId = $validated['conversation_id'] ?? null;
 
-        // Find or create conversation
+        // get or create conversation
         $conversation = null;
         if ($conversationId) {
             $conversation = $user->aiConversations()->find($conversationId);
@@ -316,13 +295,13 @@ class AiController extends Controller
             ]);
         }
 
-        // Save User Message to DB
+        // save user message
         $userMsg = $conversation->messages()->create([
             'role' => 'user',
             'text' => $message,
         ]);
 
-        // If history wasn't passed from frontend, load recent history from conversation
+        // load previous messages if needed
         if (empty($history) && $conversation) {
             $history = $conversation->messages()
                 ->where('id', '!=', $userMsg->id)
@@ -337,7 +316,7 @@ class AiController extends Controller
 
         $result = $this->gemini->chat($message, $history, $user);
 
-        // Prepare proposed_schedule JSON if tasks exist
+        // check proposed tasks
         $proposedScheduleData = null;
         if (! empty($result['proposed_tasks'])) {
             $proposedScheduleData = [
@@ -347,14 +326,14 @@ class AiController extends Controller
             ];
         }
 
-        // Save Lumi Model Message to DB
+        // save ai message
         $aiMsg = $conversation->messages()->create([
             'role' => 'model',
             'text' => $result['reply'],
             'proposed_schedule' => $proposedScheduleData,
         ]);
 
-        // Auto-generate title if it's currently "New Chat"
+        // auto rename chat
         if ($conversation->title === 'New Chat') {
             $words = preg_split('/\s+/', $message);
             $shortTitle = implode(' ', array_slice($words, 0, 5));
@@ -377,9 +356,7 @@ class AiController extends Controller
         ]);
     }
 
-    /**
-     * Quick natural language parser for a single task bar.
-     */
+    // quick task parser
     public function quickParse(Request $request): JsonResponse
     {
         $validated = $request->validate([

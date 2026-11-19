@@ -9,9 +9,6 @@ class VerificationCode extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'email',
         'code_hash',
@@ -21,9 +18,6 @@ class VerificationCode extends Model
         'consumed_at',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [

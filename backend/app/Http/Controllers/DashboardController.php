@@ -5,27 +5,22 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * Controller handling dashboard analytics and summary metrics:
- * Today's schedule, counts, completed-today, pending actions, and overview.
- */
+// dashboard metrics
 class DashboardController extends Controller
 {
-    /**
-     * Return all dashboard counts and today's schedule for the authenticated user.
-     */
+    // get dashboard counts and today tasks
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
         $today = now()->toDateString();
 
-        // 1. Tasks due today
+        // today tasks
         $todayTasks = $user->tasks()
             ->where('due_date', $today)
             ->orderBy('due_time', 'asc')
             ->get();
 
-        // 2. Metrics for the dashboard cards
+        // card metrics
         $todayTotal = $todayTasks->count();
 
         $todayCompleted = $user->tasks()
@@ -38,7 +33,7 @@ class DashboardController extends Controller
             ->where('due_date', '<=', $today)
             ->count();
 
-        // 3. Upcoming preview (next 5 pending tasks after today)
+        // upcoming tasks
         $upcomingPreview = $user->tasks()
             ->where('status', 'pending')
             ->where('due_date', '>', $today)
@@ -47,7 +42,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // 4. Counts by category
+        // category counts
         $categoriesCount = [
             'Work' => $user->tasks()->where('category', 'Work')->count(),
             'Personal' => $user->tasks()->where('category', 'Personal')->count(),

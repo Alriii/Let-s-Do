@@ -12,10 +12,7 @@ use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\IOFactory;
 use Smalot\PdfParser\Parser;
 
-/**
- * Extracts plain text from uploaded documents (PDF, DOCX, TXT).
- * Enforces a character limit and returns a truncated flag when exceeded.
- */
+// extract text from uploaded files (pdf, docx, txt)
 class DocumentExtractorService
 {
     private const MAX_CHARS = 15_000;
@@ -37,17 +34,14 @@ class DocumentExtractorService
         protected GeminiService $gemini,
     ) {}
 
-    /**
-     * @return array{text: string, truncated: bool, char_count: int, error?: string}
-     */
     public function extract(UploadedFile $file): array
     {
-        // Validate size
+        // check size
         if ($file->getSize() > self::MAX_BYTES) {
             return $this->err('File is too large. Maximum allowed size is 15 MB.');
         }
 
-        // Validate type
+        // check file type
         $ext = strtolower($file->getClientOriginalExtension());
         $mime = $file->getMimeType() ?? '';
 
@@ -71,7 +65,7 @@ class DocumentExtractorService
 
         $text = $this->cleanText($text);
 
-        // If local parser returned empty or failed (e.g. scanned PDF, image-based PDF), fall back to Gemini OCR
+        // if empty pdf, try gemini ocr
         if (empty(trim($text)) && ($ext === 'pdf' || str_contains($mime, 'pdf'))) {
             try {
                 $transcribed = $this->gemini->transcribeDocument($file);
@@ -96,8 +90,6 @@ class DocumentExtractorService
             'char_count' => strlen($text),
         ];
     }
-
-    // ─── Extractors ───────────────────────────────────────────────────────────
 
     private function extractPdf(UploadedFile $file): string
     {
@@ -158,11 +150,9 @@ class DocumentExtractorService
         return file_get_contents($file->getRealPath()) ?: '';
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
+    // clean up whitespace
     private function cleanText(string $text): string
     {
-        // Normalize line endings, strip null bytes, collapse 3+ blank lines
         $text = str_replace(["\r\n", "\r"], "\n", $text);
         $text = str_replace("\0", '', $text);
         $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;

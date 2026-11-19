@@ -6,23 +6,15 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Fetches current weather + forecast worldwide from Open-Meteo (no API key required).
- * Supports automatic geocoding for ANY city or region across the Philippines and globally.
- * Data is cached to ensure fast, responsive answers.
- */
+// weather service using open-meteo
 class WeatherService
 {
-    /** Default: Metro Manila, Philippines */
     private const DEFAULT_LAT = 14.5995;
     private const DEFAULT_LON = 120.9842;
     private const DEFAULT_CITY = 'Metro Manila, Philippines';
     private const DEFAULT_TIMEZONE = 'Asia/Manila';
 
-    /**
-     * WMO Weather Interpretation Codes → human-readable description + emoji.
-     * https://open-meteo.com/en/docs#weathervariables
-     */
+    // weather code mapping to labels
     private const WMO_CODES = [
         0  => ['label' => 'Clear sky',              'emoji' => '☀️'],
         1  => ['label' => 'Mainly clear',            'emoji' => '🌤️'],
@@ -47,12 +39,7 @@ class WeatherService
         99 => ['label' => 'Thunderstorm with hail',  'emoji' => '⛈️'],
     ];
 
-    /**
-     * Geocode any place name globally using Open-Meteo Geocoding API.
-     * Free, fast, and no API key required.
-     *
-     * @return array{name: string, latitude: float, longitude: float, country: string, timezone: string, display: string}|null
-     */
+    // geocode city name to lat/lon
     public function geocode(string $query): ?array
     {
         $clean = trim(preg_replace('/[^\w\s\-\,]/u', '', $query));
@@ -101,9 +88,7 @@ class WeatherService
         });
     }
 
-    /**
-     * Fetch current + 3-day forecast for the given city coordinates or name.
-     */
+    // get weather for lat/lon
     public function getWeather(
         ?float $lat = null,
         ?float $lon = null,
@@ -120,9 +105,7 @@ class WeatherService
         });
     }
 
-    /**
-     * Fetch weather for any named city globally.
-     */
+    // get weather by city name
     public function getWeatherForNamedPlace(string $place): ?array
     {
         $geo = $this->geocode($place);
@@ -133,11 +116,7 @@ class WeatherService
         return $this->getWeather($geo['latitude'], $geo['longitude'], $geo['display'], $geo['timezone']);
     }
 
-    /**
-     * Build context for Lumi based on the user's message.
-     * If the message asks about a specific city or region, geocodes that place and fetches live radar.
-     * Otherwise defaults to the user's home area (Metro Manila / Philippines).
-     */
+    // get weather text for prompt
     public function getPromptContextForMessage(?string $userMessage = null): string
     {
         if ($userMessage) {
@@ -153,7 +132,7 @@ class WeatherService
             }
         }
 
-        // Default local area
+        // default to metro manila
         $defaultWeather = $this->getWeather();
         $defaultContext = $defaultWeather
             ? $this->formatWeatherContext($defaultWeather, "LOCAL WEATHER RADAR (Metro Manila, Philippines)")
@@ -162,12 +141,10 @@ class WeatherService
         return $defaultContext . "\nNOTE: Lumi's weather radar is worldwide. If the user asks about weather anywhere in the world, use your knowledge and remind them you can check any place globally.";
     }
 
-    /**
-     * Extract a potential place name from a natural language question.
-     */
+    // find location from user message
     private function extractLocationFromText(string $text): ?string
     {
-        // Common patterns: "weather in Baguio", "raining in Cebu?", "forecast for Tokyo"
+        // check patterns like "weather in Cebu"
         if (preg_match('/\b(?:weather|rain|raining|forecast|sunny|cloudy|temperature|climate)\s+(?:in|at|for|around)\s+([a-zA-Z\s]{2,30}?)(?:\?|\.|\!|\band\b|\btoday\b|\btomorrow\b|$)/i', $text, $matches)) {
             return trim($matches[1]);
         }
@@ -176,7 +153,7 @@ class WeatherService
             return trim($matches[1]);
         }
 
-        // Check for common Philippine or world cities directly mentioned
+        // check list of cities
         $places = [
             'Baguio', 'Cebu', 'Davao', 'Tagaytay', 'Iloilo', 'Bacolod', 'Angeles', 'Subic',
             'Palawan', 'Boracay', 'Siargao', 'Zamboanga', 'Cagayan de Oro', 'Batangas',
@@ -194,9 +171,7 @@ class WeatherService
         return null;
     }
 
-    /**
-     * Format a weather array into a concise, readable block for Lumi.
-     */
+    // format weather text
     private function formatWeatherContext(array $data, string $header): string
     {
         $cur = $data['current'];
@@ -223,8 +198,7 @@ class WeatherService
         return implode("\n", $lines);
     }
 
-    // ─── Private helpers ──────────────────────────────────────────────────────
-
+    // api call to open-meteo
     private function fetch(float $lat, float $lon, string $city, string $timezone): ?array
     {
         $url = 'https://api.open-meteo.com/v1/forecast?' . http_build_query([

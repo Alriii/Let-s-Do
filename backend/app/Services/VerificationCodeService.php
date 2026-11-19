@@ -8,21 +8,19 @@ use Illuminate\Support\Facades\Mail;
 
 class VerificationCodeService
 {
-    /**
-     * Generate a 6-digit code, save its hash, and email it.
-     */
+    // send 6-digit verification code
     public function generateAndSend(string $email, string $purpose): void
     {
-        // 1. Invalidate any older unconsumed codes for this email and purpose
+        // expire old codes
         VerificationCode::where('email', $email)
             ->where('purpose', $purpose)
             ->whereNull('consumed_at')
             ->update(['consumed_at' => now()]);
 
-        // 2. Generate secure random 6-digit code (e.g. "042918")
+        // make 6 digit code
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // 3. Save only the secure hash in the database
+        // save hash to db
         VerificationCode::create([
             'email' => $email,
             'code_hash' => hash('sha256', $code),
@@ -31,16 +29,13 @@ class VerificationCodeService
             'attempts' => 0,
         ]);
 
-        // 4. Send the actual code via email
+        // send email
         Mail::to($email)->send(new VerificationCodeMail($code));
     }
 
-    /**
-     * Verify if a user-supplied code is valid.
-     */
+    // check code
     public function verify(string $email, string $code, string $purpose): bool
     {
-        // Find latest unconsumed code
         $record = VerificationCode::where('email', $email)
             ->where('purpose', $purpose)
             ->whereNull('consumed_at')
@@ -51,24 +46,21 @@ class VerificationCodeService
             return false;
         }
 
-        // Check expiration (15 minutes)
+        // check expiry (15 mins)
         if ($record->expires_at->isPast()) {
             return false;
         }
 
-        // Max attempt protection (limit to 5 guesses)
+        // max 5 attempts
         if ($record->attempts >= 5) {
             return false;
         }
 
-        // Increment attempt count
         $record->increment('attempts');
 
-        // Compare hashes securely
         $isValid = hash_equals($record->code_hash, hash('sha256', $code));
 
         if ($isValid) {
-            // Mark as consumed so it cannot be reused
             $record->update(['consumed_at' => now()]);
             return true;
         }

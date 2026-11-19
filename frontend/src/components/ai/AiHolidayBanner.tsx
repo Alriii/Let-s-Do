@@ -30,7 +30,7 @@ export function AiHolidayBanner() {
           : 'border-line-strong/70 bg-gradient-to-br from-surface via-surface to-brand-soft/25 shadow-[0_4px_24px_rgba(23,74,50,0.05),0_1px_3px_rgba(23,74,50,0.03),inset_0_1px_0_rgba(255,255,255,0.9)]'
       }`}
     >
-      {/* Ambient background glow */}
+      {/* background glow */}
       <div
         className="pointer-events-none absolute -left-10 -top-10 h-44 w-44 rounded-full bg-brand/10 blur-2xl"
         aria-hidden
@@ -42,7 +42,7 @@ export function AiHolidayBanner() {
         />
       )}
 
-      {/* Dismiss button */}
+      {/* close button */}
       <button
         type="button"
         onClick={() => setDismissed(true)}
@@ -52,17 +52,15 @@ export function AiHolidayBanner() {
         <X className="h-4 w-4" />
       </button>
 
-      {/* Main layout: Big Lumi character showcase + content */}
+      {/* content */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 md:gap-7">
-        {/* Lumi Mascot Showcase */}
+        {/* lumi avatar */}
         <div className="relative shrink-0 flex flex-col items-center group">
-          {/* Ambient soft glow ring */}
           <div
             className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-brand-soft/90 via-brand-soft/40 to-peach-soft/40 blur-md opacity-75 pointer-events-none transition-opacity duration-300 group-hover:opacity-100"
             aria-hidden
           />
 
-          {/* Character Pedestal */}
           <div className="relative flex items-center justify-center rounded-2xl sm:rounded-3xl border border-brand/25 bg-gradient-to-b from-surface via-brand-soft/30 to-brand-soft/60 p-2 sm:p-2.5 shadow-[0_8px_22px_rgba(23,74,50,0.08),inset_0_1px_0_rgba(255,255,255,0.95)]">
             <img
               src={botAvatarImg}
@@ -73,16 +71,15 @@ export function AiHolidayBanner() {
             />
           </div>
 
-          {/* Companion Badge */}
           <span className="relative -mt-3.5 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-surface px-2.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-brand-deep shadow-xs">
             <Sparkles className="h-3 w-3 text-brand fill-brand/20" />
             Lumi
           </span>
         </div>
 
-        {/* Briefing Content */}
+        {/* text content */}
         <div className="min-w-0 flex-1 text-center sm:text-left">
-          {/* Badges / Chips */}
+          {/* badges */}
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span className="inline-flex items-center gap-1 rounded-full border border-brand/25 bg-brand-soft px-3 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-brand-deep shadow-2xs">
               {briefing.tag || "LUMI'S INSIGHT"}
@@ -94,17 +91,15 @@ export function AiHolidayBanner() {
             )}
           </div>
 
-          {/* Headline */}
           <h2 className="mt-2 text-lg sm:text-xl md:text-[22px] font-extrabold tracking-tight text-ink leading-snug">
             {briefing.headline}
           </h2>
 
-          {/* Message */}
           <p className="mt-2 text-[13.5px] sm:text-[14.5px] leading-relaxed text-muted max-w-3xl font-normal">
             {briefing.message}
           </p>
 
-          {/* Upcoming Holidays */}
+          {/* upcoming holidays */}
           {upcoming_holidays && upcoming_holidays.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 text-[12px] text-muted">
               <span className="font-semibold text-ink-soft flex items-center gap-1.5">
