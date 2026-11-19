@@ -961,7 +961,9 @@ export function AiChatPage() {
         );
       } catch (err) {
         const errorMsg =
-          err instanceof ApiError ? err.message : 'Failed to analyze document.';
+          err instanceof ApiError
+            ? err.firstError('file') ?? err.firstError('notes') ?? err.message
+            : 'Failed to analyze document.';
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiMessageId

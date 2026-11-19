@@ -38,6 +38,7 @@ class GeminiService
     {
         if (empty($this->apiKey)) {
             Log::warning('GeminiService: No GEMINI_API_KEY configured.');
+
             return null;
         }
 
@@ -309,6 +310,7 @@ Return ONLY valid JSON matching this schema:
                 return true;
             }
         }
+
         return false;
     }
 
@@ -451,9 +453,9 @@ PROMPT;
                         $cleanedText = preg_replace('/^\s*[\*\-]\s+/m', '✨ ', trim($text));
 
                         return [
-                            'reply'          => $cleanedText,
+                            'reply' => $cleanedText,
                             'proposed_tasks' => $proposedTasks,
-                            'blocked'        => false,
+                            'blocked' => false,
                         ];
                     }
                 }
@@ -510,6 +512,56 @@ Return strictly JSON:
             $parsed = json_decode($rawJson, true);
             if (is_array($parsed) && isset($parsed['title'], $parsed['due_date'])) {
                 return $parsed;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Multimodal document transcription using Gemini's vision/PDF support.
+     * Transcribes plain text, guidelines, instructions, and dates from scanned/image PDFs.
+     */
+    public function transcribeDocument(UploadedFile $file): ?string
+    {
+        $base64 = base64_encode(file_get_contents($file->getRealPath()));
+        $mime = $file->getMimeType() ?: 'application/pdf';
+
+        $payload = [
+            'contents' => [
+                [
+                    'parts' => [
+                        [
+                            'inline_data' => [
+                                'mime_type' => $mime,
+                                'data' => $base64,
+                            ],
+                        ],
+                        [
+                            'text' => 'Please transcribe and extract all text, instructions, tasks, milestones, guidelines, and deadlines from this document verbatim. Return the plain extracted text without conversational commentary.',
+                        ],
+                    ],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'maxOutputTokens' => 8192,
+            ],
+        ];
+
+        foreach (self::MODELS as $model) {
+            try {
+                $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$this->apiKey}";
+                $response = Http::timeout(30)->post($endpoint, $payload);
+
+                if ($response->successful()) {
+                    $text = $response->json('candidates.0.content.parts.0.text');
+                    if (! empty($text)) {
+                        return trim($text);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Gemini transcribeDocument model {$model} failed: {$e->getMessage()}");
             }
         }
 

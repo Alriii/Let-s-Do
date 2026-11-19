@@ -52,14 +52,15 @@ function Toggle({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={clsx(
-        'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out',
         checked ? 'bg-brand' : 'bg-line-strong',
       )}
     >
       <span
+        aria-hidden="true"
         className={clsx(
-          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5',
+          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out',
+          checked ? 'translate-x-5' : 'translate-x-0',
         )}
       />
     </button>
@@ -231,11 +232,12 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
       setUser(response.user);
       toast.success('Profile photo updated.');
     } catch (caught) {
-      setError(
+      const msg =
         caught instanceof ApiError
           ? caught.firstError('avatar') ?? caught.message
-          : 'Unable to upload that image.',
-      );
+          : 'Unable to upload that image.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
 
@@ -295,7 +297,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

@@ -22,7 +22,8 @@ class AiController extends Controller
     /**
      * Get dynamic holiday briefing & advice for dashboard.
      */
-    public function holidayBriefing(Request $request): JsonResponse    {
+    public function holidayBriefing(Request $request): JsonResponse
+    {
         $user = $request->user();
         $briefing = $this->gemini->generateHolidayBriefing($user);
         $upcoming = $this->calendar->getUpcomingHolidays(14);
@@ -41,7 +42,7 @@ class AiController extends Controller
     public function extractFile(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,docx,doc,txt'],
+            'file' => ['required', 'file', 'max:15360', 'extensions:pdf,docx,doc,txt'],
         ]);
 
         $result = $this->extractor->extract($request->file('file'));
@@ -51,10 +52,10 @@ class AiController extends Controller
         }
 
         return response()->json([
-            'text'       => $result['text'],
+            'text' => $result['text'],
             'char_count' => $result['char_count'],
-            'truncated'  => $result['truncated'],
-            'limit'      => 15000,
+            'truncated' => $result['truncated'],
+            'limit' => 15000,
         ]);
     }
 
@@ -161,6 +162,7 @@ class AiController extends Controller
             ->get()
             ->map(function ($conv) {
                 $latest = $conv->messages->first();
+
                 return [
                     'id' => $conv->id,
                     'title' => $conv->title,
@@ -246,10 +248,10 @@ class AiController extends Controller
         }
 
         $validated = $request->validate([
-            'role'              => ['required', 'string', 'in:user,model'],
-            'text'              => ['required', 'string'],
-            'attachment'        => ['nullable', 'array'],
-            'extracted_doc'     => ['nullable', 'array'],
+            'role' => ['required', 'string', 'in:user,model'],
+            'text' => ['required', 'string'],
+            'attachment' => ['nullable', 'array'],
+            'extracted_doc' => ['nullable', 'array'],
             'proposed_schedule' => ['nullable', 'array'],
         ]);
 
@@ -274,14 +276,14 @@ class AiController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'message'          => ['required', 'string', 'min:1', 'max:2000'],
-            'conversation_id'  => ['nullable', 'integer'],
-            'history'          => ['nullable', 'array', 'max:30'],
-            'history.*.role'   => ['required', 'string', 'in:user,model'],
-            'history.*.text'   => ['required', 'string', 'max:10000'],
+            'message' => ['required', 'string', 'min:1', 'max:2000'],
+            'conversation_id' => ['nullable', 'integer'],
+            'history' => ['nullable', 'array', 'max:30'],
+            'history.*.role' => ['required', 'string', 'in:user,model'],
+            'history.*.text' => ['required', 'string', 'max:10000'],
         ]);
 
-        $user    = $request->user();
+        $user = $request->user();
         $message = trim($validated['message']);
         $history = $validated['history'] ?? [];
         $conversationId = $validated['conversation_id'] ?? null;
@@ -312,7 +314,7 @@ class AiController extends Controller
                 ->limit(10)
                 ->get()
                 ->reverse()
-                ->map(fn($m) => ['role' => $m->role, 'text' => $m->text])
+                ->map(fn ($m) => ['role' => $m->role, 'text' => $m->text])
                 ->values()
                 ->toArray();
         }
@@ -349,13 +351,13 @@ class AiController extends Controller
         $conversation->touch();
 
         return response()->json([
-            'reply'             => $result['reply'],
-            'proposed_tasks'    => $result['proposed_tasks'] ?? null,
-            'blocked'           => $result['blocked'],
-            'conversation_id'   => $conversation->id,
-            'user_message_id'   => (string) $userMsg->id,
-            'ai_message_id'     => (string) $aiMsg->id,
-            'title'             => $conversation->title,
+            'reply' => $result['reply'],
+            'proposed_tasks' => $result['proposed_tasks'] ?? null,
+            'blocked' => $result['blocked'],
+            'conversation_id' => $conversation->id,
+            'user_message_id' => (string) $userMsg->id,
+            'ai_message_id' => (string) $aiMsg->id,
+            'title' => $conversation->title,
         ]);
     }
 

@@ -57,10 +57,14 @@ class User extends Authenticatable
             return null;
         }
 
-        /** @var FilesystemAdapter $disk */
-        $disk = Storage::disk('public');
+        if (app()->runningInConsole()) {
+            /** @var FilesystemAdapter $disk */
+            $disk = Storage::disk('public');
 
-        return $disk->url($this->avatar_path);
+            return $disk->url($this->avatar_path);
+        }
+
+        return asset('storage/'.$this->avatar_path);
     }
 
     /**

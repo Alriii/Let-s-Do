@@ -40,7 +40,7 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         // 1. Create user (password automatically hashed by User model casts).
-        $name = trim(($validated['first_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+        $name = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         if ($name === '') {
             $name = $validated['name']
                 ?? Str::of($validated['email'])
@@ -254,7 +254,7 @@ class AuthController extends Controller
     public function uploadAvatar(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['required', 'file', 'image', 'max:10240'],
         ]);
 
         $user = $request->user();
