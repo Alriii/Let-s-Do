@@ -35,5 +35,12 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('auth-verify', fn (Request $request) => Limit::perMinute(10)
             ->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
+
+        // AI Chat: 20 messages per minute per authenticated user (prevents API abuse)
+        RateLimiter::for('ai-chat', fn (Request $request) => Limit::perMinute(20)
+            ->by(optional($request->user())->id ?: $request->ip())
+            ->response(fn () => response()->json([
+                'message' => 'Too many messages. Please slow down and try again in a moment! 🌿',
+            ], 429)));
     }
 }

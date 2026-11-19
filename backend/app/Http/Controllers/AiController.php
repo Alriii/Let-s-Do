@@ -101,6 +101,31 @@ class AiController extends Controller
     }
 
     /**
+     * Secure AI chat — scoped to task management, jailbreak-protected.
+     * Accepts a message + optional conversation history.
+     */
+    public function chat(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'message'          => ['required', 'string', 'min:1', 'max:800'],
+            'history'          => ['nullable', 'array', 'max:20'],
+            'history.*.role'   => ['required', 'string', 'in:user,model'],
+            'history.*.text'   => ['required', 'string', 'max:800'],
+        ]);
+
+        $user    = $request->user();
+        $message = trim($validated['message']);
+        $history = $validated['history'] ?? [];
+
+        $result = $this->gemini->chat($message, $history, $user);
+
+        return response()->json([
+            'reply'   => $result['reply'],
+            'blocked' => $result['blocked'],
+        ]);
+    }
+
+    /**
      * Quick natural language parser for a single task bar.
      */
     public function quickParse(Request $request): JsonResponse

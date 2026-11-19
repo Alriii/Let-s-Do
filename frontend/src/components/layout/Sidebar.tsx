@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { CalendarClock, CircleCheckBig, House, Sparkles, X } from 'lucide-react';
+import { Bot, CalendarClock, CircleCheckBig, House, Sparkles, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import botanicalPlantImg from '../../assets/botanical-plant.png';
 import logoImg from '../../assets/logo.png';
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: House, end: true },
   { to: '/upcoming', label: 'Upcoming', icon: CalendarClock, end: false },
   { to: '/completed', label: 'Completed', icon: CircleCheckBig, end: false },
+  { to: '/ai-chat', label: 'AI Chat', icon: Bot, end: false },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

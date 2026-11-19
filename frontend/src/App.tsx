@@ -4,6 +4,7 @@ import { AppShell } from './components/layout/AppShell';
 import { FullPageSpinner } from './components/ui/Feedback';
 import { ToastProvider } from './components/ui/Toast';
 import { useAuth, AuthProvider } from './stores/auth';
+import { AiChatPage } from './pages/AiChatPage';
 import { CompletedPage } from './pages/CompletedPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -82,6 +83,7 @@ export default function App() {
                   <Route path="/upcoming" element={<UpcomingPage />} />
                   <Route path="/pending" element={<PendingPage />} />
                   <Route path="/completed" element={<CompletedPage />} />
+                  <Route path="/ai-chat" element={<AiChatPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Route>
