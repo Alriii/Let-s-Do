@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 /**
  * Service that provides live internet search capabilities for Lumi.
  * Allows Lumi to check real-world closing/opening hours of malls, businesses,
- * transit schedules, event dates, and other schedule-related information.
+ * transit schedules, event dates, hotel & staycation availability, and other
+ * schedule-related information the user needs to plan their day.
  */
 class WebSearchService
 {
@@ -27,6 +28,14 @@ class WebSearchService
         '/\b(mrt|lrt|pnr|bus|train|flight|ferry)\s+(schedule|hours|status)\b/i',
         '/\b(typhoon|storm|flood|class\s+suspension|walang\s+pasok)\b/i',
         '/\bsearch\s+(google|the\s+web|online|internet)\s+for\b/i',
+        // Hotels & staycations — schedule-relevant (check-in/out, availability, amenities)
+        '/\b(hotel|hotels|resort|resorts|staycation|inn|hostel|airbnb|villa|lodge)\b/i',
+        '/\b(check[- ]?in|check[- ]?out)\s+(time|schedule|hours?)\b/i',
+        '/\b(book|reserve|reservation)\s+.*(hotel|room|resort|staycation|suite)\b/i',
+        '/\b(best|cheap|affordable|budget|luxury)\s+(hotel|resort|staycation|rooms?)\b/i',
+        '/\b(hotel|resort|staycation)\s+(near|in|at|around)\b/i',
+        '/\bwhere\s+(to\s+)?(stay|sleep|book|staycay)\b/i',
+        '/\bstaycay\b/i',
     ];
 
     /**
