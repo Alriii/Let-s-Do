@@ -1339,44 +1339,48 @@ export function AiChatPage() {
       {/* ── Main Chat Area ── */}
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
-          <div className="flex items-center gap-3">
-            {/* History toggle */}
+        <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-4 py-3">
+          {/* Left: History toggle + Lumi identity */}
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => setSidebarOpen((v) => !v)}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-brand transition-colors"
-              title={sidebarOpen ? 'Close history' : 'Open chat history'}
+              title={sidebarOpen ? "Close history" : "Open chat history"}
             >
               {sidebarOpen ? (
-                <PanelLeftClose className="h-4.5 w-4.5" aria-hidden />
+                <PanelLeftClose className="h-[18px] w-[18px]" aria-hidden />
               ) : (
-                <History className="h-4.5 w-4.5" aria-hidden />
+                <History className="h-[18px] w-[18px]" aria-hidden />
               )}
             </button>
+
+            {/* Thin vertical divider */}
+            <span className="h-6 w-px bg-line shrink-0" aria-hidden />
 
             <img
               src={botAvatarImg}
               alt="Lumi"
-              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
+              className="h-9 w-9 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
             />
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-ink">Lumi</h1>
-              <p className="text-xs sm:text-sm text-muted">
-                Lumi, your Let's Do! AI companion • Philippine Calendar aware 🇵🇭
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-ink leading-tight">Lumi</h1>
+              <p className="text-[11px] sm:text-xs text-muted truncate">
+                Lumi, your Let&apos;s Do! AI companion • Philippine Calendar aware 🇵🇭
               </p>
             </div>
           </div>
 
+          {/* Right: New Chat button */}
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
               <button
                 type="button"
                 onClick={startNewChat}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted hover:bg-surface-2 hover:text-ink transition-colors"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-muted hover:bg-surface-2 hover:text-ink transition-colors"
                 title="New chat"
               >
-                <Plus className="h-4 w-4" aria-hidden />
+                <Plus className="h-3.5 w-3.5" aria-hidden />
                 New Chat
               </button>
             )}
@@ -1407,11 +1411,11 @@ export function AiChatPage() {
                   className="h-32 w-32 object-contain drop-shadow-md animate-scale-in"
                 />
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-ink">
+              <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                <h2 className="text-xl sm:text-2xl font-bold text-ink text-center">
                   Hi! I'm Lumi! Ready to make today productive? 💚
                 </h2>
-                <p className="mt-2 text-sm sm:text-base text-muted max-w-md leading-relaxed">
+                <p className="mt-2 text-sm sm:text-base text-muted max-w-md mx-auto text-center leading-relaxed">
                   I'm here to remind you about deadlines, organize your schedule, celebrate your wins, and gently keep procrastination away!
                 </p>
               </div>
