@@ -1,6 +1,7 @@
 import { CalendarDays, CheckCircle2, ListTodo, Plus, SearchX } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AiHolidayBanner } from '../components/ai/AiHolidayBanner';
 import { FilterPills } from '../components/tasks/FilterPills';
 import { MetricCard } from '../components/tasks/MetricCard';
 import { RightRail } from '../components/tasks/RightRail';
@@ -64,6 +65,8 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <AiHolidayBanner />
+
       <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         <MetricCard
           icon={<ListTodo className="h-7 w-7" aria-hidden />}

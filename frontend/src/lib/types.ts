@@ -136,3 +136,37 @@ export interface TaskInput {
   priority: TaskPriority;
   notes: string | null;
 }
+
+export interface HolidayInfo {
+  name: string;
+  type: string;
+  date: string;
+  formatted_date: string;
+  day_of_week: string;
+  days_away?: number;
+  is_today?: boolean;
+  is_tomorrow?: boolean;
+}
+
+export interface AiBriefing {
+  headline: string;
+  message: string;
+  tag: string;
+  has_holiday: boolean;
+  holiday_name: string | null;
+}
+
+export interface HolidayBriefingResponse {
+  briefing: AiBriefing;
+  upcoming_holidays: HolidayInfo[];
+  long_weekend: {
+    holiday: HolidayInfo;
+    days_away: number;
+    type: string;
+  } | null;
+}
+
+export interface ParseNotesResponse {
+  summary: string;
+  tasks: TaskInput[];
+}

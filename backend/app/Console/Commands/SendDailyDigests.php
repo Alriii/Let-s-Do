@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\DailyDigestMail;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\GeminiService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -16,9 +17,9 @@ class SendDailyDigests extends Command
 {
     protected $signature = 'tasks:send-daily-digest';
 
-    protected $description = 'Send the morning schedule digest to opted-in users';
+    protected $description = 'Send the morning schedule digest with AI holiday context to opted-in users';
 
-    public function handle(): int
+    public function handle(GeminiService $gemini): int
     {
         $today = now()->toDateString();
         $tomorrow = now()->addDay()->toDateString();
@@ -36,7 +37,7 @@ class SendDailyDigests extends Command
                     ->orderBy('due_date')
                     ->orderBy('due_time');
             }])
-            ->chunkById(100, function ($users) use ($today, $tomorrow, $nextWeek, &$sent) {
+            ->chunkById(100, function ($users) use ($today, $tomorrow, $nextWeek, $gemini, &$sent) {
                 foreach ($users as $user) {
                     $todayTasks = $user->tasks
                         ->filter(fn (Task $task) => $task->due_date->toDateString() === $today)
@@ -51,8 +52,16 @@ class SendDailyDigests extends Command
                         ->whereBetween('due_date', [$tomorrow, $nextWeek])
                         ->count();
 
+                    // Generate AI Holiday & Workload advice
+                    $aiBriefing = null;
+                    try {
+                        $aiBriefing = $gemini->generateHolidayBriefing($user);
+                    } catch (\Throwable $e) {
+                        // Fall back gracefully if AI service has a hiccup
+                    }
+
                     Mail::to($user->email)->send(
-                        new DailyDigestMail($user, $todayTasks, $overdueTasks, $upcomingCount)
+                        new DailyDigestMail($user, $todayTasks, $overdueTasks, $upcomingCount, $aiBriefing)
                     );
 
                     $sent++;

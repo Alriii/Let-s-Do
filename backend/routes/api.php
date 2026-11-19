@@ -70,6 +70,14 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::patch('/tasks/{task}/cancel', [TaskController::class, 'cancel']);
     Route::patch('/tasks/{task}/reopen', [TaskController::class, 'reopen']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
+
+    // --- AI Knowledge & Philippine Calendar ---
+    Route::prefix('ai')->group(function () {
+        Route::get('/holiday-briefing', [\App\Http\Controllers\AiController::class, 'holidayBriefing']);
+        Route::post('/parse-notes', [\App\Http\Controllers\AiController::class, 'parseNotes']);
+        Route::post('/import-tasks', [\App\Http\Controllers\AiController::class, 'importTasks']);
+        Route::post('/quick-parse', [\App\Http\Controllers\AiController::class, 'quickParse']);
+    });
 });
 
 // Legacy / Default user check
