@@ -1,8 +1,9 @@
-import { Calendar, Sparkles, X } from 'lucide-react';
+import { Calendar, X } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { HolidayBriefingResponse } from '../../lib/types';
+import botAvatarImg from '../../assets/bot-avatar.png';
 
 export function AiHolidayBanner() {
   const [dismissed, setDismissed] = useState(false);
@@ -30,26 +31,16 @@ export function AiHolidayBanner() {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-              isHoliday
-                ? 'bg-brand text-white shadow-xs'
-                : 'bg-brand-tint text-brand-deep'
-            }`}
-          >
-            {isHoliday ? (
-              <span className="text-lg" role="img" aria-label="Philippines Flag">
-                🇵🇭
-              </span>
-            ) : (
-              <Sparkles className="h-5 w-5 text-brand" />
-            )}
-          </div>
+          <img
+            src={botAvatarImg}
+            alt="Lumi, your Let's Do! AI companion"
+            className="h-11 w-11 shrink-0 rounded-xl object-contain drop-shadow-xs"
+          />
 
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand-deep uppercase">
-                {briefing.tag || 'AI SCHEDULE INSIGHT'}
+                {briefing.tag || "LUMI'S INSIGHT"}
               </span>
               {long_weekend && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-amber uppercase">

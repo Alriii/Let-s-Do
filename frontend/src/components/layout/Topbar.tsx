@@ -21,8 +21,8 @@ const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'A record of the progress you have already made.',
   },
   '/ai-chat': {
-    title: 'AI Productivity Chat',
-    subtitle: 'Chat with LetsDo AI, upload course syllabi, and import scheduled tasks.',
+    title: 'Chat with Lumi',
+    subtitle: "Lumi, your Let's Do! AI companion · organize your schedule and beat deadlines.",
   },
 };
 

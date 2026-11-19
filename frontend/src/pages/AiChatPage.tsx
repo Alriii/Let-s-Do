@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  Bot,
   Calendar,
   CalendarPlus,
   Check,
@@ -10,7 +9,6 @@ import {
   Loader2,
   Paperclip,
   Send,
-  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -19,8 +17,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../lib/api';
 import { categoryStyles, priorityStyles } from '../lib/format';
 import type { ParseNotesResponse, TaskInput } from '../lib/types';
-import { useAuth } from '../stores/auth';
 import { useToast } from '../components/ui/Toast';
+import botAvatarImg from '../assets/bot-avatar.png';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,8 +58,8 @@ interface ChatResponse {
 }
 
 const STARTERS = [
-  'What are some tips to beat procrastination?',
-  'How should I prioritize my tasks this week?',
+  'What are some gentle tips to beat procrastination?',
+  'Help me organize and prioritize my schedule this week!',
   'Is there a Philippine holiday coming up soon?',
   'Help me plan my study schedule for finals.',
 ];
@@ -350,19 +348,17 @@ function Bubble({
   return (
     <div className={`flex gap-3.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
-      <div
-        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-          isUser
-            ? 'bg-brand text-white shadow-xs'
-            : 'bg-brand-soft border border-brand/30 text-brand'
-        }`}
-      >
-        {isUser ? (
+      {isUser ? (
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-xs">
           <span className="text-xs font-bold leading-none">YOU</span>
-        ) : (
-          <Sparkles className="h-4 w-4 text-brand" aria-hidden />
-        )}
-      </div>
+        </div>
+      ) : (
+        <img
+          src={botAvatarImg}
+          alt="Lumi"
+          className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
+        />
+      )}
 
       {/* Bubble Container */}
       <div
@@ -414,10 +410,8 @@ function Bubble({
 // ─── Main AI Chat Page ────────────────────────────────────────────────────────
 
 export function AiChatPage() {
-  const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const firstName = user?.name?.split(' ')[0] ?? 'there';
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -533,7 +527,7 @@ export function AiChatPage() {
                   processing: {
                     step: 'ai_analysis',
                     label:
-                      'AI analyzing tasks, milestones, deadlines & Philippine holidays…',
+                      'Lumi is analyzing tasks, milestones, deadlines & Philippine holidays…',
                   },
                 }
               : m,
@@ -555,7 +549,7 @@ export function AiChatPage() {
             m.id === aiMessageId
               ? {
                   ...m,
-                  text: `I've analyzed **${fileToSend.name}** and mapped out the schedule with automated reminders and Philippine holiday awareness:`,
+                  text: `I've analyzed **${fileToSend.name}** and mapped out your schedule with automated reminders! 💚 Here's what I found:`,
                   processing: undefined,
                   extractedDoc: {
                     fileName: fileToSend.name,
@@ -578,7 +572,7 @@ export function AiChatPage() {
             m.id === aiMessageId
               ? {
                   ...m,
-                  text: `Sorry, I encountered an issue reading that document: ${errorMsg}. Please try uploading again or pasting the text directly.`,
+                  text: `Sorry, I encountered an issue reading that document: ${errorMsg}. Please try uploading again or pasting the text directly! 🌿`,
                   processing: undefined,
                 }
               : m,
@@ -595,7 +589,7 @@ export function AiChatPage() {
         text: '',
         processing: {
           step: 'thinking',
-          label: 'LetsDo AI is thinking…',
+          label: 'Lumi is thinking…',
         },
         timestamp: new Date(),
       };
@@ -770,13 +764,15 @@ export function AiChatPage() {
       {/* ── Header ── */}
       <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft border border-brand/30">
-            <Bot className="h-5 w-5 text-brand" aria-hidden />
-          </div>
+          <img
+            src={botAvatarImg}
+            alt="Lumi"
+            className="h-10 w-10 shrink-0 rounded-full object-cover border border-brand/35 shadow-xs bg-brand-soft"
+          />
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-ink">LetsDo AI</h1>
+            <h1 className="text-base sm:text-lg font-bold text-ink">Lumi</h1>
             <p className="text-xs sm:text-sm text-muted">
-              Task management &amp; schedule assistant • Philippine Calendar aware 🇵🇭
+              Lumi, your Let's Do! AI companion • Philippine Calendar aware 🇵🇭
             </p>
           </div>
         </div>
@@ -796,22 +792,26 @@ export function AiChatPage() {
 
       {/* ── Scope Notice ── */}
       <div className="shrink-0 bg-brand-tint border-b border-brand/20 px-6 py-2.5 text-xs sm:text-sm text-brand-deep">
-        🔒 Focused on <strong>task planning, syllabus breakdown, and Philippine holidays</strong>. Attach notes or files below!
+        💚 <strong>Lumi</strong> is here for <strong>task planning, deadlines, syllabus breakdown, and schedule advice</strong>. Attach notes or files below!
       </div>
 
       {/* ── Messages Stream (Only this section scrolls) ── */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 sm:px-6">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft border border-brand/30">
-              <Sparkles className="h-8 w-8 text-brand" aria-hidden />
+            <div className="flex items-center justify-center">
+              <img
+                src={botAvatarImg}
+                alt="Lumi, your Let's Do! AI companion"
+                className="h-32 w-32 object-contain drop-shadow-md animate-scale-in"
+              />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-ink">
-                Hey {firstName}! How can I help with your schedule?
+                Hi! I'm Lumi! Ready to make today productive? 💚
               </h2>
               <p className="mt-2 text-sm sm:text-base text-muted max-w-md leading-relaxed">
-                Ask productivity questions, or click the paperclip below to feed a syllabus/rubric and import tasks with 3 email reminders.
+                I'm here to remind you about deadlines, organize your schedule, celebrate your wins, and gently keep procrastination away!
               </p>
             </div>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 w-full max-w-lg">
@@ -907,8 +907,8 @@ export function AiChatPage() {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   attachedFile
-                    ? 'Add instructions (e.g. prioritize quizzes)... or press Enter to analyze'
-                    : 'Ask about tasks, deadlines, or attach a document…'
+                    ? 'Add instructions for Lumi (e.g. prioritize quizzes)... or press Enter to analyze'
+                    : 'Ask Lumi about tasks, deadlines, or attach a document…'
                 }
                 rows={1}
                 maxLength={800}
