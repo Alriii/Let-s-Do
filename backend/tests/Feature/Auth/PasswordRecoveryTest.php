@@ -23,7 +23,8 @@ test('forgot password sends a 6-digit reset code via email', function () {
     $response->assertStatus(200);
 
     Mail::assertSent(VerificationCodeMail::class, function ($mail) {
-        return $mail->hasTo('reset@example.com');
+        return $mail->hasTo('reset@example.com')
+            && $mail->purpose === 'password_reset';
     });
 
     $this->assertDatabaseHas('verification_codes', [

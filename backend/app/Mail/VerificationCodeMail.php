@@ -30,6 +30,7 @@ class VerificationCodeMail extends Mailable
     {
         return new Content(
             view: 'emails.verification-code',
+            text: 'emails.verification-code-text',
             with: [
                 'code' => $this->code,
                 'purpose' => $this->purpose,

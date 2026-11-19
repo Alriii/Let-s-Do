@@ -30,7 +30,7 @@ class VerificationCodeService
         ]);
 
         // send email
-        Mail::to($email)->send(new VerificationCodeMail($code));
+        Mail::to($email)->send(new VerificationCodeMail($code, $purpose));
     }
 
     // check code
@@ -62,6 +62,7 @@ class VerificationCodeService
 
         if ($isValid) {
             $record->update(['consumed_at' => now()]);
+
             return true;
         }
 

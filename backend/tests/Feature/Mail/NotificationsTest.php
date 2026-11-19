@@ -2,6 +2,7 @@
 
 use App\Mail\DailyDigestMail;
 use App\Mail\TaskReminderMail;
+use App\Mail\VerificationCodeMail;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,4 +50,21 @@ test('task reminders respect the notification preference', function () {
 
     Mail::assertSent(TaskReminderMail::class, 1);
     Mail::assertSent(TaskReminderMail::class, fn (TaskReminderMail $mail) => $mail->hasTo($enabled->email));
+});
+
+test('verification email renders the code and embeds Lumi inline', function () {
+    $html = (new VerificationCodeMail('123456'))->render();
+
+    expect($html)
+        ->toContain('123456')
+        ->toContain('data:image/jpeg;base64,')
+        ->not->toContain('raw.githubusercontent.com');
+});
+
+test('password reset email uses the reset copy', function () {
+    $html = (new VerificationCodeMail('654321', 'password_reset'))->render();
+
+    expect($html)
+        ->toContain('654321')
+        ->toContain('Reset your password');
 });
