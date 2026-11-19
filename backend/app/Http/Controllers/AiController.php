@@ -41,11 +41,27 @@ class AiController extends Controller
      */
     public function extractFile(Request $request): JsonResponse
     {
+        $file = $request->file('file');
+
+        if (! $file) {
+            return response()->json([
+                'message' => 'Please select a document (PDF, DOCX, TXT) to upload.',
+                'errors' => ['file' => ['No document file was received by the server.']],
+            ], 422);
+        }
+
+        if (! $file->isValid()) {
+            return response()->json([
+                'message' => 'The uploaded document could not be processed (' . $file->getErrorMessage() . '). Please choose a file under 15MB.',
+                'errors' => ['file' => [$file->getErrorMessage()]],
+            ], 422);
+        }
+
         $request->validate([
             'file' => ['required', 'file', 'max:15360', 'extensions:pdf,docx,doc,txt'],
         ]);
 
-        $result = $this->extractor->extract($request->file('file'));
+        $result = $this->extractor->extract($file);
 
         if (isset($result['error'])) {
             return response()->json(['message' => $result['error']], 422);

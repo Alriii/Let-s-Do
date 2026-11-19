@@ -52,14 +52,14 @@ function Toggle({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={clsx(
-        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out',
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
         checked ? 'bg-brand' : 'bg-line-strong',
       )}
     >
       <span
         aria-hidden="true"
         className={clsx(
-          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out',
+          'pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out',
           checked ? 'translate-x-5' : 'translate-x-0',
         )}
       />
