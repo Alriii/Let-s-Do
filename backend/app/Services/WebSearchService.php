@@ -36,6 +36,30 @@ class WebSearchService
         '/\b(hotel|resort|staycation)\s+(near|in|at|around)\b/i',
         '/\bwhere\s+(to\s+)?(stay|sleep|book|staycay)\b/i',
         '/\bstaycay\b/i',
+        // Restaurants & food
+        '/\b(restaurant|resto|cafe|coffee\s*shop|diner|eatery|fastfood|food\s*park|carinderia)\b/i',
+        '/\b(where\s+to\s+eat|best\s+food|good\s+food|food\s+near|restos?\s+(near|in|at))\b/i',
+        '/\b(reservation|book\s+a\s+table|dine\s+in)\s+.*(resto|restaurant|cafe)\b/i',
+        // Movie & event schedules
+        '/\b(cinema|movie|film|showing|screening|concert|event|exhibit|festival)\s*(schedule|hours?|time|today|near|ticket)?\b/i',
+        '/\b(sm\s*cinema|ayala\s*cinemas?|robinsons\s*movieworld|vsmile|imax|odeon)\b/i',
+        '/\bwhat\s*(movie|film|show)\s*is\s*(now\s*)?showing\b/i',
+        // Fitness & health
+        '/\b(gym|fitness|crossfit|yoga|pilates|zumba|swimming\s*pool)\s*(hours?|schedule|open|near)\b/i',
+        '/\b(workout|exercise|training|meal\s*prep)\s*(plan|schedule|routine|reminder)\b/i',
+        // Government services
+        '/\b(dfa|nbi|philsys|sss|gsis|pagibig|pag\-?ibig|bir|lto|dti|phil\s*health|philhealth)\b/i',
+        '/\b(passport|clearance|appointment|government\s*(office|service|agency))\s*(schedule|hours?|how\s+to|steps?|process)\b/i',
+        // Travel & commute
+        '/\b(flight|airline|airport|grab|angkas|taxi|jeep|bus|mrt|lrt)\s*(schedule|fare|route|time|price)\b/i',
+        '/\b(commute|travel\s*time|how\s+to\s+get\s+to|directions?\s+to)\b/i',
+        // Grocery & errands
+        '/\b(grocery|supermarket|palengke|wet\s*market|puregold|savemore|waltermart|landers)\b/i',
+        '/\b(errand|to[- ]?do\s+list|shopping\s+list|batch\s+(errands?|tasks?))\b/i',
+        // Online shopping & delivery
+        '/\b(shopee|lazada|zalora|tiktok\s*shop|carousell)\s*(sale|promo|voucher|delivery|tracking)\b/i',
+        '/\b(online\s+(shopping|order)|delivery\s+(time|schedule|track|status))\b/i',
+        '/\b(11\.11|12\.12|mega\s*sale|flash\s*sale|payday\s*sale)\b/i',
     ];
 
     /**
