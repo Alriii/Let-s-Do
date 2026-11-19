@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -524,8 +525,13 @@ Return strictly JSON:
      */
     public function transcribeDocument(UploadedFile $file): ?string
     {
+        if (empty($this->apiKey)) {
+            return null;
+        }
+
         $base64 = base64_encode(file_get_contents($file->getRealPath()));
-        $mime = $file->getMimeType() ?: 'application/pdf';
+        $ext = strtolower($file->getClientOriginalExtension());
+        $mime = ($ext === 'pdf') ? 'application/pdf' : ($file->getMimeType() ?: 'application/pdf');
 
         $payload = [
             'contents' => [
