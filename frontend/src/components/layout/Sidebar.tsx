@@ -86,13 +86,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-line-strong/60 bg-gradient-to-b from-surface via-surface to-brand-soft/20 p-4 text-center shadow-xs">
+      <div className="flex flex-col items-center gap-2 text-center pt-2">
         <img
           src={botanicalPlantImg}
           alt="Botanical Plant"
           className="h-[80px] w-[105px] object-contain drop-shadow-xs"
         />
-        <p className="max-w-[190px] text-center text-[11.5px] font-medium leading-relaxed text-muted">
+        <p className="max-w-[190px] text-center text-[12px] font-medium leading-relaxed text-muted">
           &ldquo;Rush and you will break,
           <br />
           Slow and you&rsquo;ll be safe.&rdquo;
