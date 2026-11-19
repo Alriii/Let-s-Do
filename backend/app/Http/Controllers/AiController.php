@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\DocumentExtractorService;
 use App\Services\GeminiService;
 use App\Services\PhilippineCalendarService;
 use Illuminate\Http\JsonResponse;
@@ -11,14 +12,14 @@ class AiController extends Controller
 {
     public function __construct(
         private GeminiService $gemini,
-        private PhilippineCalendarService $calendar
+        private PhilippineCalendarService $calendar,
+        private DocumentExtractorService $extractor,
     ) {}
 
     /**
      * Get dynamic holiday briefing & advice for dashboard.
      */
-    public function holidayBriefing(Request $request): JsonResponse
-    {
+    public function holidayBriefing(Request $request): JsonResponse    {
         $user = $request->user();
         $briefing = $this->gemini->generateHolidayBriefing($user);
         $upcoming = $this->calendar->getUpcomingHolidays(14);
@@ -28,6 +29,29 @@ class AiController extends Controller
             'briefing' => $briefing,
             'upcoming_holidays' => $upcoming,
             'long_weekend' => $longWeekend,
+        ]);
+    }
+
+    /**
+     * Extract plain text from an uploaded document (PDF, DOCX, TXT).
+     */
+    public function extractFile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,docx,doc,txt'],
+        ]);
+
+        $result = $this->extractor->extract($request->file('file'));
+
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json([
+            'text'       => $result['text'],
+            'char_count' => $result['char_count'],
+            'truncated'  => $result['truncated'],
+            'limit'      => 15000,
         ]);
     }
 
