@@ -144,6 +144,7 @@ export function SignupPage() {
               id={firstNameId}
               type="text"
               autoComplete="given-name"
+              spellCheck={false}
               placeholder="e.g. Alex"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
@@ -157,6 +158,7 @@ export function SignupPage() {
               id={lastNameId}
               type="text"
               autoComplete="family-name"
+              spellCheck={false}
               placeholder="e.g. Morgan"
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
@@ -171,6 +173,7 @@ export function SignupPage() {
             id={emailId}
             type="email"
             autoComplete="email"
+            spellCheck={false}
             placeholder="name@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -205,6 +208,7 @@ export function SignupPage() {
               id={passwordId}
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
+              spellCheck={false}
               placeholder="At least 8 characters"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -248,6 +252,7 @@ export function SignupPage() {
             id={confirmId}
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
+            spellCheck={false}
             placeholder="Re-enter your password"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
