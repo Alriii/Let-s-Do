@@ -3,14 +3,18 @@
 # -----------------------------------------------------------------------------
 FROM php:8.4-apache
 
-# Install required system packages and PostgreSQL development libraries
+# Install required system packages, image libraries for GD, and PostgreSQL development libraries
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
     libicu-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     unzip \
     git \
     curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     pgsql \
@@ -18,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     bcmath \
     intl \
     opcache \
+    gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Point Apache DocumentRoot directly to Laravel's public directory
@@ -42,7 +47,7 @@ RUN sed -i 's/\r$//' /var/www/html/docker/entrypoint.sh \
 
 # Install production dependencies without running artisan scripts during build
 # (Scripts will run at container startup when environment variables are present)
-RUN composer install --no-dev --no-scripts --optimize-autoloader --no-interaction
+RUN composer install --no-dev --no-scripts --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Set proper permissions for Laravel writable directories
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
