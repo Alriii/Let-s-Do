@@ -537,12 +537,12 @@ function Bubble({
 
       {/* Bubble Container */}
       <div
-        className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-5 py-3.5 text-base sm:text-[16px] leading-[1.65] ${
+        className={`max-w-[88%] sm:max-w-[80%] rounded-[20px] px-5 py-3.5 text-base sm:text-[15.5px] leading-[1.65] ${
           isUser
-            ? 'bg-brand text-white rounded-tr-xs shadow-xs'
+            ? 'bg-gradient-to-br from-brand to-[#38945f] text-white rounded-tr-xs shadow-[0_4px_14px_rgba(69,170,112,0.25),inset_0_1px_0_rgba(255,255,255,0.25)]'
             : msg.blocked
-              ? 'bg-amber-50 border border-amber-200 text-amber-900 rounded-tl-xs'
-              : 'bg-surface-2 border border-line text-ink rounded-tl-xs shadow-xs'
+              ? 'bg-amber-50 border border-amber-200 text-amber-900 rounded-tl-xs shadow-xs'
+              : 'bg-surface border border-line-strong/60 text-ink rounded-tl-xs shadow-[0_2px_8px_rgba(23,74,50,0.04),inset_0_1px_0_rgba(255,255,255,0.85)]'
         }`}
       >
         {/* User attachment pill */}
@@ -1509,14 +1509,14 @@ export function AiChatPage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isProcessing}
                 title="Attach syllabus or document (PDF, DOCX, TXT)"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-muted transition hover:border-brand/40 hover:bg-brand-soft hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line-strong/60 bg-surface text-muted transition-all hover:border-brand/40 hover:bg-brand-soft hover:text-brand-strong active:scale-95 shadow-xs focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40"
                 aria-label="Attach document"
               >
                 <Paperclip className="h-4.5 w-4.5" aria-hidden />
               </button>
 
               {/* Textarea container */}
-              <div className="flex-1 rounded-xl border border-line bg-surface-2 px-4 py-2.5 focus-within:border-brand/60 focus-within:ring-2 focus-within:ring-brand/15 transition">
+              <div className="flex-1 rounded-2xl border border-line-strong/60 bg-surface px-4 py-2.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15 transition-all">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -1540,7 +1540,7 @@ export function AiChatPage() {
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={(!input.trim() && !attachedFile) || isProcessing}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-brand to-[#38945f] text-white shadow-[0_4px_12px_rgba(69,170,112,0.25),inset_0_1px_0_rgba(255,255,255,0.3)] hover:brightness-105 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
                 aria-label="Send message"
               >
                 <Send className="h-4.5 w-4.5" aria-hidden />

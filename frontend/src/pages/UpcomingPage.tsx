@@ -167,10 +167,10 @@ export function UpcomingPage() {
         <InlineError message="We couldn't load your upcoming tasks." onRetry={() => void refetch()} />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_420px] 2xl:grid-cols-[minmax(0,1fr)_506px]">
-          <section className="flex min-h-[560px] flex-col rounded-[18px] border border-line bg-surface p-5 lg:p-6">
+          <section className="flex min-h-[560px] flex-col rounded-[22px] border border-line-strong/60 bg-surface p-6 shadow-[0_1px_3px_rgba(23,74,50,0.03),0_8px_24px_rgba(23,74,50,0.03),inset_0_1px_0_rgba(255,255,255,0.85)] lg:p-7">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold tracking-[-0.01em] text-ink sm:text-xl">
+                <h2 className="text-lg font-extrabold tracking-tight text-ink sm:text-xl">
                   Chronological Timeline
                 </h2>
                 <p className="mt-1 text-xs text-muted">

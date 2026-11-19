@@ -23,10 +23,10 @@ export function AiHolidayBanner() {
 
   return (
     <div
-      className={`relative mb-6 overflow-hidden rounded-2xl border p-5 transition-all ${
+      className={`relative mb-6 overflow-hidden rounded-[20px] border p-5 transition-all ${
         isHoliday
-          ? 'border-brand/40 bg-gradient-to-r from-brand-soft/60 via-surface to-brand-soft/30 shadow-sm'
-          : 'border-line bg-surface-raised shadow-xs'
+          ? 'border-brand/40 bg-gradient-to-r from-brand-soft/75 via-surface to-peach-soft/40 shadow-[0_4px_20px_rgba(23,74,50,0.06),inset_0_1px_0_rgba(255,255,255,0.9)]'
+          : 'border-line-strong/60 bg-surface shadow-[0_2px_12px_rgba(23,74,50,0.04),inset_0_1px_0_rgba(255,255,255,0.85)]'
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -34,22 +34,22 @@ export function AiHolidayBanner() {
           <img
             src={botAvatarImg}
             alt="Lumi, your Let's Do! AI companion"
-            className="h-11 w-11 shrink-0 rounded-xl object-contain drop-shadow-xs"
+            className="h-11 w-11 shrink-0 rounded-2xl object-contain drop-shadow-xs border border-brand/20 bg-brand-soft/50"
           />
 
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand-deep uppercase">
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand/25 bg-brand-soft px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-brand-deep uppercase shadow-2xs">
                 {briefing.tag || "LUMI'S INSIGHT"}
               </span>
               {long_weekend && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-amber uppercase">
+                <span className="inline-flex items-center gap-1 rounded-full border border-peach/30 bg-peach-soft px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-rose uppercase shadow-2xs">
                   🌴 {long_weekend.type}
                 </span>
               )}
             </div>
 
-            <h3 className="text-[15px] font-bold text-ink">
+            <h3 className="text-[15.5px] font-bold tracking-tight text-ink">
               {briefing.headline}
             </h3>
 

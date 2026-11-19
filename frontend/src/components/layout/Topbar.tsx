@@ -46,10 +46,10 @@ export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
           <Menu className="h-5 w-5" aria-hidden />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink sm:text-[26px] xl:text-[28px]">
+          <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-ink sm:text-[26px] xl:text-[28px]">
             {copy.title}
           </h1>
-          <p className="mt-1 hidden truncate text-[13px] text-muted sm:block sm:text-sm">
+          <p className="mt-1 hidden truncate text-[13px] font-medium text-muted sm:block sm:text-sm">
             {copy.subtitle}
           </p>
         </div>
@@ -59,7 +59,7 @@ export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         <button
           type="button"
           onClick={openAddTask}
-          className="grid h-10 w-10 place-items-center rounded-[10px] bg-brand text-white transition-colors hover:bg-brand-deep lg:hidden"
+          className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-b from-brand to-[#38945f] text-white shadow-[0_3px_10px_rgba(69,170,112,0.25)] transition hover:brightness-105 active:scale-95 lg:hidden"
           aria-label="Add task"
         >
           <Plus className="h-5 w-5" aria-hidden />

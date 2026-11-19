@@ -39,25 +39,25 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
   };
 
   return (
-    <section className="rounded-[18px] border border-line bg-surface p-5">
+    <section className="rounded-[20px] border border-line-strong/60 bg-surface p-5 shadow-[0_1px_3px_rgba(23,74,50,0.03),0_6px_16px_rgba(23,74,50,0.03),inset_0_1px_0_rgba(255,255,255,0.85)]">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[15px] font-bold text-ink">Calendar</h2>
-        <div className="flex items-center gap-1">
+        <h2 className="text-[15px] font-bold tracking-tight text-ink">Calendar</h2>
+        <div className="flex items-center gap-1 rounded-lg border border-line bg-surface-2 p-0.5">
           <button
             type="button"
             onClick={() => changeMonth(-1)}
-            className="grid h-7 w-7 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            className="grid h-6.5 w-6.5 place-items-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink active:scale-95"
             aria-label="Previous month"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
           </button>
-          <span className="min-w-[92px] text-center text-xs font-bold text-ink">
+          <span className="min-w-[88px] text-center text-xs font-bold text-ink">
             {formatMonthLabel(month)}
           </span>
           <button
             type="button"
             onClick={() => changeMonth(1)}
-            className="grid h-7 w-7 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            className="grid h-6.5 w-6.5 place-items-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink active:scale-95"
             aria-label="Next month"
           >
             <ChevronRight className="h-4 w-4" aria-hidden />
@@ -98,9 +98,9 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                   className={clsx(
                     'relative grid h-[31px] place-items-center rounded-lg text-xs transition-colors',
                     selected
-                      ? 'bg-brand font-bold text-white'
+                      ? 'bg-gradient-to-b from-brand to-brand-strong font-bold text-white shadow-xs'
                       : isToday
-                        ? 'border border-brand/45 font-bold text-brand-strong hover:bg-brand-soft'
+                        ? 'border border-brand/50 font-bold text-brand-strong bg-brand-soft/60 hover:bg-brand-soft'
                         : inMonth
                           ? 'text-ink hover:bg-surface-2'
                           : 'text-faint/60 hover:bg-surface-2',
