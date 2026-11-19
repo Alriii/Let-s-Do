@@ -62,7 +62,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#111514]/45 p-4 backdrop-blur-[2px] animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#252B29]/50 p-4 backdrop-blur-[3px] animate-fade-in"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -74,7 +74,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         className={clsx(
-          'w-full overflow-hidden rounded-[20px] border border-line bg-surface shadow-[0_24px_60px_rgba(17,21,20,0.18)] animate-scale-in',
+          'w-full overflow-hidden rounded-[20px] border border-line bg-surface shadow-[0_24px_60px_rgba(23,74,50,0.14)] animate-scale-in',
           sizes[size],
           className,
         )}

@@ -25,7 +25,7 @@ export function AiHolidayBanner() {
     <div
       className={`relative mb-6 overflow-hidden rounded-2xl border p-5 transition-all ${
         isHoliday
-          ? 'border-brand/40 bg-gradient-to-r from-brand-tint/90 via-surface to-brand-tint/40 shadow-sm'
+          ? 'border-brand/40 bg-gradient-to-r from-brand-soft/60 via-surface to-brand-soft/30 shadow-sm'
           : 'border-line bg-surface-raised shadow-xs'
       }`}
     >

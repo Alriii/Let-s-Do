@@ -74,7 +74,7 @@ export function ProfileMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+10px)] z-40 w-[236px] overflow-hidden rounded-[12px] border border-line bg-surface p-3 shadow-[0_16px_40px_rgba(17,21,20,0.14)] animate-scale-in"
+          className="absolute right-0 top-[calc(100%+10px)] z-40 w-[236px] overflow-hidden rounded-[12px] border border-line bg-surface p-3 shadow-[0_16px_40px_rgba(23,74,50,0.12)] animate-scale-in"
         >
           <div className="flex items-center gap-2.5 px-1 py-1">
             <Avatar name={user.name} src={user.avatar_url} size={34} />

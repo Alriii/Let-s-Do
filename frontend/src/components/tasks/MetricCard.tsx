@@ -11,9 +11,9 @@ interface MetricCardProps {
 }
 
 const tones = {
-  brand: 'bg-brand-tint text-brand-strong',
-  mint: 'bg-[#e5f7f2] text-[#0f766e]',
-  amber: 'bg-[#fff7ed] text-amber',
+  brand: 'bg-brand-soft text-brand-strong',
+  mint: 'bg-brand-soft text-brand-strong',
+  amber: 'bg-peach-soft text-rose',
 };
 
 export function MetricCard({

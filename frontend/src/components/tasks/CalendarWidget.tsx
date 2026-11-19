@@ -100,7 +100,7 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                     selected
                       ? 'bg-brand font-bold text-white'
                       : isToday
-                        ? 'border border-brand/45 font-bold text-brand-strong hover:bg-brand-tint'
+                        ? 'border border-brand/45 font-bold text-brand-strong hover:bg-brand-soft'
                         : inMonth
                           ? 'text-ink hover:bg-surface-2'
                           : 'text-faint/60 hover:bg-surface-2',

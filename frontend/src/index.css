@@ -3,55 +3,59 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --canvas: #f7f9f7;
+  --canvas: #F8FAF7;
   --surface: #ffffff;
-  --surface-2: #fbfdfc;
-  --ink: #111514;
-  --ink-soft: #1c1f25;
-  --muted: #6b7280;
-  --muted-2: #64728b;
-  --faint: #9ca3af;
-  --line: #eaeeeb;
-  --line-strong: #dee1e5;
-  --brand: #4ba86e;
-  --brand-strong: #1a8245;
-  --brand-deep: #277d41;
-  --brand-soft: #e8f5ed;
-  --brand-tint: #edf7ed;
+  --surface-2: #f2f6f3;
+  --ink: #252B29;
+  --ink-soft: #38423e;
+  --muted: #626e68;
+  --muted-2: #626e68;
+  --faint: #98a59f;
+  --line: #e4ebe6;
+  --line-strong: #d3ded6;
+  --brand: #45AA70;
+  --brand-strong: #174A32;
+  --brand-deep: #174A32;
+  --brand-soft: #DDF3E5;
+  --brand-tint: #eef8f2;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --info: #2563eb;
   --info-soft: #eff6ff;
   --amber: #d97706;
   --amber-soft: #fef3c7;
-  --rose: #c95656;
-  --rose-soft: #fce9e9;
+  --rose: #e07a68;
+  --rose-soft: #F5B8AD33;
+  --peach: #F5B8AD;
+  --peach-soft: #fdf1ef;
 }
 
 html.dark, :root.dark, .dark {
-  --canvas: #0e1210;
-  --surface: #161b18;
-  --surface-2: #1b211d;
-  --ink: #eef3ef;
-  --ink-soft: #e7ede9;
-  --muted: #9aa5a0;
-  --muted-2: #9aa5a0;
-  --faint: #6f7b75;
-  --line: #262e29;
-  --line-strong: #35423b;
-  --brand: #4ba86e;
-  --brand-strong: #8ed3a5;
-  --brand-deep: #a7e0b9;
-  --brand-soft: #1c2a22;
-  --brand-tint: #1c2a22;
+  --canvas: #151917;
+  --surface: #252B29;
+  --surface-2: #2e3633;
+  --ink: #F8FAF7;
+  --ink-soft: #dce5df;
+  --muted: #9aa8a1;
+  --muted-2: #9aa8a1;
+  --faint: #6c7972;
+  --line: #333d39;
+  --line-strong: #414e48;
+  --brand: #45AA70;
+  --brand-strong: #78d29f;
+  --brand-deep: #DDF3E5;
+  --brand-soft: #174A32;
+  --brand-tint: #1c3d2b;
   --danger: #f07878;
   --danger-soft: #2a1a1a;
   --info: #7aa7f0;
   --info-soft: #1a2233;
   --amber: #e8b34a;
   --amber-soft: #2b2416;
-  --rose: #e08a8a;
-  --rose-soft: #2a1a1a;
+  --rose: #F5B8AD;
+  --rose-soft: #3d2420;
+  --peach: #F5B8AD;
+  --peach-soft: #3d2420;
 }
 
 @theme {
@@ -80,6 +84,8 @@ html.dark, :root.dark, .dark {
   --color-amber-soft: var(--amber-soft);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
+  --color-peach: var(--peach);
+  --color-peach-soft: var(--peach-soft);
 
   --radius-card: 18px;
   --radius-pill: 14px;
@@ -90,6 +96,10 @@ html.dark, :root.dark, .dark {
   body,
   #root {
     height: 100%;
+  }
+
+  :root {
+    color-scheme: light dark;
   }
 
   html.dark {
@@ -109,6 +119,7 @@ html.dark, :root.dark, .dark {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     transition: background-color 150ms ease, color 150ms ease;
+    accent-color: var(--color-brand);
   }
 
   button,
@@ -128,12 +139,23 @@ html.dark, :root.dark, .dark {
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-brand) 28%, transparent);
+    background-color: var(--color-brand-soft);
+    color: var(--color-brand-deep);
   }
 
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--color-line-strong) transparent;
+  }
+
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 2px solid Highlight;
+    }
+    ::selection {
+      background-color: Highlight;
+      color: HighlightText;
+    }
   }
 }
 

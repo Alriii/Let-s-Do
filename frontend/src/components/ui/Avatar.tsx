@@ -37,7 +37,7 @@ export function Avatar({ name, src, size = 42, className }: AvatarProps) {
       style={dimension}
       onError={() => setLoadFailed(true)}
       className={clsx(
-        'shrink-0 rounded-full border border-[#eaeeeb] object-cover shadow-sm',
+        'shrink-0 rounded-full border border-line object-cover shadow-sm',
         className,
       )}
     />

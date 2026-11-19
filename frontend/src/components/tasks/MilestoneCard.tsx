@@ -23,7 +23,7 @@ export function MilestoneCard({ tasks }: { tasks: Task[] }) {
           <Target className="h-4 w-4 text-brand-strong" aria-hidden />
           <h2 className="text-[15px] font-bold text-ink">Priority Milestone</h2>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2 py-0.5 text-[10.5px] font-bold text-amber">
+        <span className="inline-flex items-center gap-1 rounded-full bg-peach-soft px-2.5 py-0.5 text-[10.5px] font-bold text-rose">
           <Sparkles className="h-3 w-3" aria-hidden />
           Upcoming Focus
         </span>

@@ -62,7 +62,7 @@ export function TaskRow({ task, className }: { task: Task; className?: string })
             'grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border transition-colors disabled:opacity-60',
             done
               ? 'border-brand-strong bg-brand-strong text-white'
-              : 'border-line-strong bg-surface hover:border-brand hover:bg-brand-tint',
+              : 'border-line-strong bg-surface hover:border-brand hover:bg-brand-soft',
           )}
         >
           {done ? (
