@@ -35,6 +35,13 @@ interface ExtractedDocData {
 
 type ProcessingStep = 'reading_file' | 'ai_analysis' | 'thinking';
 
+interface ProposedScheduleData {
+  tasks: TaskInput[];
+  selectedIndices: number[];
+  imported?: boolean;
+  importing?: boolean;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'model';
@@ -50,10 +57,12 @@ interface Message {
     label: string;
   };
   extractedDoc?: ExtractedDocData;
+  proposedSchedule?: ProposedScheduleData;
 }
 
 interface ChatResponse {
   reply: string;
+  proposed_tasks?: TaskInput[] | null;
   blocked: boolean;
 }
 
@@ -70,6 +79,48 @@ const ACCEPTED_FILE_TYPES = '.pdf,.docx,.doc,.txt';
 function formatFileSize(bytes: number): string {
   const kb = Math.round(bytes / 1024);
   return kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`;
+}
+
+/**
+ * Format message text with rich styling:
+ * - Converts markdown **bold** into <strong> elements (eliminating literal asterisks).
+ * - Converts stray leading * or - bullet points into neat sparkle emojis.
+ * - Preserves emojis, spacing, and paragraph line breaks.
+ */
+function renderFormattedText(text: string) {
+  // Replace accidental leading bullet asterisks or hyphens
+  const sanitized = text
+    .replace(/^\s*[\*\-]\s+/gm, '✨ ')
+    .replace(/\n\s*[\*\-]\s+/g, '\n✨ ');
+
+  const paragraphs = sanitized.split('\n\n');
+
+  return paragraphs.map((para, paraIdx) => {
+    const lines = para.split('\n');
+    return (
+      <p key={paraIdx} className={paraIdx > 0 ? 'mt-2.5' : ''}>
+        {lines.map((line, lineIdx) => {
+          // Parse **bold text**
+          const parts = line.split(/(\*\*.*?\*\*)/g);
+          return (
+            <span key={lineIdx} className="block min-h-[1.3em]">
+              {parts.map((part, partIdx) => {
+                if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+                  const inner = part.slice(2, -2);
+                  return (
+                    <strong key={partIdx} className="font-bold text-inherit">
+                      {inner}
+                    </strong>
+                  );
+                }
+                return part;
+              })}
+            </span>
+          );
+        })}
+      </p>
+    );
+  });
 }
 
 // ─── Task Card inside Chat Bubble ─────────────────────────────────────────────
@@ -273,6 +324,96 @@ function ExtractedScheduleReview({
   );
 }
 
+// ─── Proposed Schedule Confirmation (Lumi directly suggests a schedule) ──────
+
+function ProposedScheduleConfirmation({
+  schedule,
+  onToggleIndex,
+  onSelectAll,
+  onDeselectAll,
+  onImport,
+}: {
+  schedule: ProposedScheduleData;
+  onToggleIndex: (index: number) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onImport: () => void;
+}) {
+  const count = schedule.selectedIndices.length;
+  const allSelected = count === schedule.tasks.length && count > 0;
+
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-brand/30 bg-surface/90 p-4 shadow-xs">
+      <div className="flex items-center justify-between border-b border-line pb-2.5">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand text-sm">
+            📋
+          </span>
+          <div>
+            <h4 className="text-sm font-bold text-ink">
+              Proposed Schedule Confirmation
+            </h4>
+            <p className="text-xs text-muted">
+              Lumi prepared {schedule.tasks.length} task{schedule.tasks.length !== 1 ? 's' : ''}. Double-check and confirm before adding:
+            </p>
+          </div>
+        </div>
+        {!schedule.imported && (
+          <button
+            type="button"
+            onClick={allSelected ? onDeselectAll : onSelectAll}
+            className="text-xs font-semibold text-brand hover:underline"
+          >
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {schedule.tasks.map((task, idx) => (
+          <ChatTaskCard
+            key={task.title + idx}
+            task={task}
+            selected={schedule.selectedIndices.includes(idx)}
+            disabled={schedule.imported || schedule.importing}
+            onToggle={() => onToggleIndex(idx)}
+          />
+        ))}
+      </div>
+
+      <div className="pt-1">
+        {schedule.imported ? (
+          <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-deep">
+            <CheckCircle2 className="h-4.5 w-4.5 text-brand" aria-hidden />
+            <span>
+              {count} task{count !== 1 ? 's' : ''} added to your schedule! You can view them in Home or Upcoming. 🎉
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={count === 0 || schedule.importing}
+            onClick={onImport}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {schedule.importing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Adding tasks to schedule…
+              </>
+            ) : (
+              <>
+                <CalendarPlus className="h-4 w-4" aria-hidden />
+                Confirm &amp; Add {count} Task{count !== 1 ? 's' : ''} to Schedule 💚
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Inline Processing Bubble (Replacing separate tabs/modals) ───────────────
 
 function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: string }) {
@@ -336,12 +477,20 @@ function Bubble({
   onSelectAllDoc,
   onDeselectAllDoc,
   onImportDoc,
+  onToggleScheduleIndex,
+  onSelectAllSchedule,
+  onDeselectAllSchedule,
+  onImportSchedule,
 }: {
   msg: Message;
   onToggleDocIndex?: (index: number) => void;
   onSelectAllDoc?: () => void;
   onDeselectAllDoc?: () => void;
   onImportDoc?: () => void;
+  onToggleScheduleIndex?: (index: number) => void;
+  onSelectAllSchedule?: () => void;
+  onDeselectAllSchedule?: () => void;
+  onImportSchedule?: () => void;
 }) {
   const isUser = msg.role === 'user';
 
@@ -381,8 +530,12 @@ function Bubble({
           </div>
         )}
 
-        {/* Text content */}
-        {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
+        {/* Text content with bold & emoji formatting (no asterisks) */}
+        {msg.text && (
+          <div className="leading-relaxed">
+            {renderFormattedText(msg.text)}
+          </div>
+        )}
 
         {/* Processing State indicator inside AI bubble */}
         {msg.processing && (
@@ -400,6 +553,17 @@ function Bubble({
             onSelectAll={onSelectAllDoc}
             onDeselectAll={onDeselectAllDoc}
             onImport={onImportDoc}
+          />
+        )}
+
+        {/* Proposed Schedule Confirmation inside AI bubble */}
+        {msg.proposedSchedule && onToggleScheduleIndex && onSelectAllSchedule && onDeselectAllSchedule && onImportSchedule && (
+          <ProposedScheduleConfirmation
+            schedule={msg.proposedSchedule}
+            onToggleIndex={onToggleScheduleIndex}
+            onSelectAll={onSelectAllSchedule}
+            onDeselectAll={onDeselectAllSchedule}
+            onImport={onImportSchedule}
           />
         )}
       </div>
@@ -476,6 +640,17 @@ export function AiChatPage() {
 
     const userMessageId = crypto.randomUUID();
     const aiMessageId = crypto.randomUUID();
+
+    // Check if user is affirming a pending schedule confirmation from Lumi's last response
+    const lastAiMsg = [...messages].reverse().find(
+      (m) => m.role === 'model' && m.proposedSchedule && !m.proposedSchedule.imported,
+    );
+    const isAffirmation = /^(yes|yeah|yep|sure|ok|okay|confirm|add|add them|add it|do it|go ahead|please add)/i.test(
+      textToSend.trim(),
+    );
+    if (lastAiMsg && isAffirmation && lastAiMsg.proposedSchedule) {
+      void handleImportSchedule(lastAiMsg.id);
+    }
 
     // 1. Add User Message
     const userMsg: Message = {
@@ -596,10 +771,10 @@ export function AiChatPage() {
 
       setMessages((prev) => [...prev, userMsg, initialAiMsg]);
 
-      // Build conversation history (up to last 10 turns)
+      // Build conversation history (up to last 10 turns, safe character length per turn)
       const history = messages.slice(-10).map((m) => ({
         role: m.role,
-        text: m.text,
+        text: m.text.slice(0, 4000),
       }));
 
       try {
@@ -608,14 +783,44 @@ export function AiChatPage() {
           history,
         });
 
+        let cleanReply = res.reply;
+        let proposedTasks: TaskInput[] | null = res.proposed_tasks || null;
+
+        // Fallback: If proposed_tasks was not parsed by backend but present in text block
+        if (!proposedTasks) {
+          const match = cleanReply.match(/```(?:json:tasks|json)?\s*(\[\s*\{.*?\}\s*\])\s*```/s);
+          if (match) {
+            try {
+              const parsed = JSON.parse(match[1]);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                proposedTasks = parsed as TaskInput[];
+                cleanReply = cleanReply.replace(match[0], '').trim();
+              }
+            } catch {
+              // ignore json parse error
+            }
+          }
+        }
+
+        // Clean any stray asterisk bullets at line starts
+        cleanReply = cleanReply.replace(/^\s*[\*\-]\s+/gm, '✨ ');
+
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiMessageId
               ? {
                   ...m,
-                  text: res.reply,
+                  text: cleanReply,
                   blocked: res.blocked,
                   processing: undefined,
+                  proposedSchedule: proposedTasks && proposedTasks.length > 0
+                    ? {
+                        tasks: proposedTasks,
+                        selectedIndices: proposedTasks.map((_, i) => i),
+                        imported: false,
+                        importing: false,
+                      }
+                    : undefined,
                 }
               : m,
           ),
@@ -750,6 +955,120 @@ export function AiChatPage() {
     [messages, queryClient, toast],
   );
 
+  // ─── Proposed Schedule Confirmation Handlers ───────────────────────────────
+
+  const handleToggleScheduleIndex = useCallback((messageId: string, index: number) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || !m.proposedSchedule) return m;
+        const current = m.proposedSchedule.selectedIndices;
+        const next = current.includes(index)
+          ? current.filter((i) => i !== index)
+          : [...current, index];
+        return {
+          ...m,
+          proposedSchedule: {
+            ...m.proposedSchedule,
+            selectedIndices: next,
+          },
+        };
+      }),
+    );
+  }, []);
+
+  const handleSelectAllSchedule = useCallback((messageId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || !m.proposedSchedule) return m;
+        return {
+          ...m,
+          proposedSchedule: {
+            ...m.proposedSchedule,
+            selectedIndices: m.proposedSchedule.tasks.map((_, i) => i),
+          },
+        };
+      }),
+    );
+  }, []);
+
+  const handleDeselectAllSchedule = useCallback((messageId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || !m.proposedSchedule) return m;
+        return {
+          ...m,
+          proposedSchedule: {
+            ...m.proposedSchedule,
+            selectedIndices: [],
+          },
+        };
+      }),
+    );
+  }, []);
+
+  const handleImportSchedule = useCallback(
+    async (messageId: string) => {
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg?.proposedSchedule) return;
+
+      const { tasks, selectedIndices } = msg.proposedSchedule;
+      const tasksToImport = tasks.filter((_, i) => selectedIndices.includes(i));
+
+      if (tasksToImport.length === 0) {
+        toast.error('Please select at least one task to add.');
+        return;
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId && m.proposedSchedule
+            ? { ...m, proposedSchedule: { ...m.proposedSchedule, importing: true } }
+            : m,
+        ),
+      );
+
+      try {
+        const res = await api.post<{ message: string }>('/ai/import-tasks', {
+          tasks: tasksToImport,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['calendar'] });
+
+        toast.success(res.message || 'Tasks added to your schedule! 💚');
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId && m.proposedSchedule
+              ? {
+                  ...m,
+                  proposedSchedule: {
+                    ...m.proposedSchedule,
+                    importing: false,
+                    imported: true,
+                  },
+                }
+              : m,
+          ),
+        );
+      } catch (err) {
+        const errorText =
+          err instanceof ApiError ? err.message : 'Failed to add tasks to schedule.';
+        toast.error(errorText);
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId && m.proposedSchedule
+              ? { ...m, proposedSchedule: { ...m.proposedSchedule, importing: false } }
+              : m,
+          ),
+        );
+      }
+    },
+    [messages, queryClient, toast],
+  );
+
   const clearChat = () => {
     setMessages([]);
     setError(null);
@@ -837,6 +1156,10 @@ export function AiChatPage() {
                 onSelectAllDoc={() => handleSelectAllDoc(msg.id)}
                 onDeselectAllDoc={() => handleDeselectAllDoc(msg.id)}
                 onImportDoc={() => handleImportDoc(msg.id)}
+                onToggleScheduleIndex={(idx) => handleToggleScheduleIndex(msg.id, idx)}
+                onSelectAllSchedule={() => handleSelectAllSchedule(msg.id)}
+                onDeselectAllSchedule={() => handleDeselectAllSchedule(msg.id)}
+                onImportSchedule={() => handleImportSchedule(msg.id)}
               />
             ))}
             {error && (
@@ -911,7 +1234,7 @@ export function AiChatPage() {
                     : 'Ask Lumi about tasks, deadlines, or attach a document…'
                 }
                 rows={1}
-                maxLength={800}
+                maxLength={2000}
                 disabled={isProcessing}
                 className="block w-full resize-none bg-transparent text-base text-ink placeholder-muted outline-none disabled:opacity-50"
                 aria-label="Chat message"

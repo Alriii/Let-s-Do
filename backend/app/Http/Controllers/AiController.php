@@ -131,10 +131,10 @@ class AiController extends Controller
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'message'          => ['required', 'string', 'min:1', 'max:800'],
-            'history'          => ['nullable', 'array', 'max:20'],
+            'message'          => ['required', 'string', 'min:1', 'max:2000'],
+            'history'          => ['nullable', 'array', 'max:30'],
             'history.*.role'   => ['required', 'string', 'in:user,model'],
-            'history.*.text'   => ['required', 'string', 'max:800'],
+            'history.*.text'   => ['required', 'string', 'max:10000'],
         ]);
 
         $user    = $request->user();
@@ -144,8 +144,9 @@ class AiController extends Controller
         $result = $this->gemini->chat($message, $history, $user);
 
         return response()->json([
-            'reply'   => $result['reply'],
-            'blocked' => $result['blocked'],
+            'reply'          => $result['reply'],
+            'proposed_tasks' => $result['proposed_tasks'] ?? null,
+            'blocked'        => $result['blocked'],
         ]);
     }
 
