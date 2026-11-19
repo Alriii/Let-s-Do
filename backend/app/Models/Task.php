@@ -24,6 +24,8 @@ class Task extends Model
         'category',
         'due_date',
         'due_time',
+        'start_time',
+        'end_time',
         'priority',
         'notes',
         'status',
@@ -32,6 +34,12 @@ class Task extends Model
         'cancelled_at',
         'completed_at',
         'reminder_sent_at',
+        'reminder_enabled',
+        'reminder_target',
+        'reminder_interval_minutes',
+        'reminder_count',
+        'reminders_sent',
+        'last_reminder_sent_at',
     ];
 
     /**
@@ -46,17 +54,34 @@ class Task extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
+            'reminder_enabled' => 'boolean',
+            'reminder_interval_minutes' => 'integer',
+            'reminder_count' => 'integer',
+            'reminders_sent' => 'integer',
+            'last_reminder_sent_at' => 'datetime',
         ];
     }
 
     /**
-     * Reset the reminder flag whenever a task is rescheduled, so the
-     * 30-minute reminder fires again for the new due date/time.
+     * Reset the reminder state whenever a task is rescheduled or reminder settings change.
      */
     protected static function booted(): void
     {
         static::updating(function (Task $task): void {
-            if ($task->isDirty(['due_date', 'due_time']) && ! $task->isDirty('reminder_sent_at')) {
+            $rescheduledFields = [
+                'due_date',
+                'due_time',
+                'start_time',
+                'end_time',
+                'reminder_target',
+                'reminder_interval_minutes',
+                'reminder_count',
+                'reminder_enabled',
+            ];
+
+            if ($task->isDirty($rescheduledFields) && ! $task->isDirty('reminders_sent')) {
+                $task->reminders_sent = 0;
+                $task->last_reminder_sent_at = null;
                 $task->reminder_sent_at = null;
             }
         });

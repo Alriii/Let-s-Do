@@ -81,9 +81,20 @@ class TaskController extends Controller
     {
         $validated = $request->validated();
 
+        if (empty($validated['due_time'])) {
+            $validated['due_time'] = $validated['end_time'] ?? $validated['start_time'] ?? null;
+        }
+        if (empty($validated['end_time']) && ! empty($validated['due_time'])) {
+            $validated['end_time'] = $validated['due_time'];
+        }
+        if (empty($validated['start_time']) && ! empty($validated['due_time'])) {
+            $validated['start_time'] = $validated['due_time'];
+        }
+
         // Ensure user_id is forced to the authenticated user and status starts as pending
         $task = $request->user()->tasks()->create(array_merge($validated, [
             'status' => 'pending',
+            'reminders_sent' => 0,
         ]));
 
         return response()->json([
@@ -111,7 +122,15 @@ class TaskController extends Controller
     {
         $this->authorizeTask($request, $task);
 
-        $task->update($request->validated());
+        $validated = $request->validated();
+
+        if (array_key_exists('end_time', $validated) || array_key_exists('start_time', $validated) || array_key_exists('due_time', $validated)) {
+            if (empty($validated['due_time'])) {
+                $validated['due_time'] = $validated['end_time'] ?? $validated['start_time'] ?? $task->due_time;
+            }
+        }
+
+        $task->update($validated);
 
         return response()->json([
             'message' => 'Task updated successfully.',

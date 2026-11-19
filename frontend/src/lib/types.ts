@@ -2,6 +2,7 @@ export type TaskStatus = 'pending' | 'completed' | 'cancelled';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 export type TaskCategory = 'Work' | 'Personal' | 'Health' | 'Errands';
 export type Theme = 'light' | 'dark';
+export type ReminderTarget = 'start_time' | 'end_time';
 
 export const CATEGORIES: TaskCategory[] = ['Work', 'Personal', 'Health', 'Errands'];
 export const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High'];
@@ -13,6 +14,8 @@ export interface Task {
   category: TaskCategory;
   due_date: string;
   due_time: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
   priority: TaskPriority;
   notes: string | null;
   status: TaskStatus;
@@ -21,6 +24,12 @@ export interface Task {
   cancelled_at: string | null;
   completed_at: string | null;
   reminder_sent_at: string | null;
+  reminder_enabled?: boolean;
+  reminder_target?: ReminderTarget;
+  reminder_interval_minutes?: number;
+  reminder_count?: number;
+  reminders_sent?: number;
+  last_reminder_sent_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,6 +127,12 @@ export interface TaskInput {
   category: TaskCategory;
   due_date: string;
   due_time: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  reminder_enabled?: boolean;
+  reminder_target?: ReminderTarget;
+  reminder_interval_minutes?: number;
+  reminder_count?: number;
   priority: TaskPriority;
   notes: string | null;
 }

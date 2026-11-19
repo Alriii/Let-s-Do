@@ -78,6 +78,13 @@ export function formatTime(value: string | null): string {
   }).format(date);
 }
 
+export function formatTaskTimeRange(task: Task): string {
+  if (task.start_time && task.end_time && task.start_time !== task.end_time) {
+    return `${formatTime(task.start_time)} – ${formatTime(task.end_time)}`;
+  }
+  return formatTime(task.due_time ?? task.start_time ?? task.end_time ?? null);
+}
+
 /** "Monday, Oct 26" */
 export function formatWeekdayDate(value: string): string {
   const date = parseISODate(value);

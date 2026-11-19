@@ -1,9 +1,9 @@
 import clsx from 'clsx';
-import { Ban, Check } from 'lucide-react';
+import { Ban, Bell, Check } from 'lucide-react';
 import { ApiError } from '../../lib/api';
 import {
   categoryStyles,
-  formatTime,
+  formatTaskTimeRange,
   isOverdue,
   priorityStyles,
 } from '../../lib/format';
@@ -88,7 +88,10 @@ export function TaskRow({ task, className }: { task: Task; className?: string })
           <span className={clsx('rounded px-1.5 py-0.5 font-medium', categoryStyles[task.category])}>
             {task.category}
           </span>
-          <span>{formatTime(task.due_time)}</span>
+          {task.reminder_enabled && (
+            <Bell className="h-3 w-3 text-brand" aria-label="Reminder active" />
+          )}
+          <span>{formatTaskTimeRange(task)}</span>
         </p>
       </div>
 
@@ -125,11 +128,19 @@ export function TaskRow({ task, className }: { task: Task; className?: string })
 
       <span
         className={clsx(
-          'hidden w-[76px] shrink-0 text-right text-[11.5px] md:block',
+          'hidden shrink-0 text-right text-[11.5px] md:flex md:items-center md:gap-1.5',
           overdue && !done && !cancelled ? 'font-semibold text-danger' : 'text-muted',
         )}
       >
-        {formatTime(task.due_time)}
+        {task.reminder_enabled && (
+          <span
+            className="flex items-center text-brand"
+            title={`Email reminder enabled (${task.reminder_count ?? 3}x every ${task.reminder_interval_minutes ?? 5}m)`}
+          >
+            <Bell className="h-3 w-3 shrink-0" aria-hidden />
+          </span>
+        )}
+        <span>{formatTaskTimeRange(task)}</span>
       </span>
 
       <TaskActionsMenu task={task} />

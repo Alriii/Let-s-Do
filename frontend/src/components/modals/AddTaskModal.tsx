@@ -1,8 +1,8 @@
-import { CalendarDays, Check, Clock3, X } from 'lucide-react';
+import { BellRing, CalendarDays, Check, Clock3, Sparkles, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ApiError } from '../../lib/api';
 import { todayISO } from '../../lib/format';
-import { CATEGORIES, PRIORITIES, type Task, type TaskCategory, type TaskInput, type TaskPriority } from '../../lib/types';
+import { CATEGORIES, PRIORITIES, type ReminderTarget, type Task, type TaskCategory, type TaskInput, type TaskPriority } from '../../lib/types';
 import { useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import { useToast } from '../ui/Toast';
 import { Button } from '../ui/Button';
@@ -15,11 +15,46 @@ interface AddTaskModalProps {
   onClose: () => void;
 }
 
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+        checked ? 'bg-brand' : 'bg-line-strong'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+          checked ? 'translate-x-[22px]' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  );
+}
+
 const emptyForm = (): TaskInput => ({
   title: '',
   category: 'Work',
   due_date: todayISO(),
   due_time: '',
+  start_time: '',
+  end_time: '',
+  reminder_enabled: true,
+  reminder_target: 'start_time',
+  reminder_interval_minutes: 5,
+  reminder_count: 3,
   priority: 'Medium',
   notes: '',
 });
@@ -35,7 +70,10 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
   const titleId = useFieldId('task-title');
   const categoryId = useFieldId('task-category');
   const dueDateId = useFieldId('task-due-date');
-  const timeId = useFieldId('task-time');
+  const startTimeId = useFieldId('task-start-time');
+  const endTimeId = useFieldId('task-end-time');
+  const intervalId = useFieldId('task-reminder-interval');
+  const countId = useFieldId('task-reminder-count');
   const notesId = useFieldId('task-notes');
 
   useEffect(() => {
@@ -52,6 +90,12 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
         category: task.category,
         due_date: task.due_date,
         due_time: task.due_time ?? '',
+        start_time: task.start_time ?? task.due_time ?? '',
+        end_time: task.end_time ?? task.due_time ?? '',
+        reminder_enabled: task.reminder_enabled ?? false,
+        reminder_target: (task.reminder_target as ReminderTarget) ?? 'start_time',
+        reminder_interval_minutes: task.reminder_interval_minutes ?? 5,
+        reminder_count: task.reminder_count ?? 3,
         priority: task.priority,
         notes: task.notes ?? '',
       });
@@ -79,11 +123,23 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
     setError(null);
     setFieldErrors({});
 
+    const startTime = form.start_time?.trim() ? form.start_time.trim() : null;
+    const endTime = form.end_time?.trim() ? form.end_time.trim() : null;
+    const dueTime = form.due_time?.trim()
+      ? form.due_time.trim()
+      : (endTime ?? startTime);
+
     const payload: TaskInput = {
       ...form,
       title: form.title.trim(),
       notes: form.notes?.trim() ? form.notes.trim() : null,
-      due_time: form.due_time ? form.due_time : null,
+      due_time: dueTime,
+      start_time: startTime ?? dueTime,
+      end_time: endTime ?? dueTime,
+      reminder_enabled: Boolean(form.reminder_enabled),
+      reminder_target: form.reminder_target ?? 'start_time',
+      reminder_interval_minutes: Number(form.reminder_interval_minutes ?? 5),
+      reminder_count: Number(form.reminder_count ?? 3),
     };
 
     try {
@@ -116,6 +172,15 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
 
   const busy = createTask.isPending || updateTask.isPending;
 
+  const reminderCount = Number(form.reminder_count ?? 3);
+  const reminderInterval = Number(form.reminder_interval_minutes ?? 5);
+  const anchorLabel = form.reminder_target === 'end_time' ? 'deadline / ends' : 'starts';
+
+  const scheduleOffsets: string[] = [];
+  for (let i = reminderCount; i >= 1; i--) {
+    scheduleOffsets.push(`${i * reminderInterval}m`);
+  }
+
   return (
     <Modal
       open={open}
@@ -143,18 +208,21 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-muted transition-colors hover:bg-line hover:text-ink disabled:opacity-50"
-            aria-label="Close dialog"
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-raised hover:text-ink disabled:opacity-50"
           >
-            <X className="h-4 w-4" aria-hidden />
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        <div className="mt-5 flex-1 overflow-y-auto border-t border-line px-6 py-5 sm:px-7">
+        <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-7">
           {error && (
-            <p className="mb-4 rounded-[10px] border border-danger/25 bg-danger-soft px-3 py-2 text-[13px] font-medium text-danger">
+            <div
+              role="alert"
+              className="mb-4 rounded-[10px] border border-danger/20 bg-danger/10 px-4 py-3 text-xs text-danger"
+            >
               {error}
-            </p>
+            </div>
           )}
 
           <Field
@@ -167,19 +235,24 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
               id={titleId}
               value={form.title}
               onChange={(event) => set('title', event.target.value)}
-              placeholder="e.g., Morning workout, Team meeting..."
-              maxLength={255}
+              placeholder="e.g., Review project proposal"
               autoFocus
               invalid={Boolean(fieldErrors.title)}
             />
           </Field>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="Category" htmlFor={categoryId} error={fieldErrors.category}>
+          <div className="mt-4">
+            <Field
+              label="Category"
+              htmlFor={categoryId}
+              required
+              error={fieldErrors.category}
+            >
               <Select
                 id={categoryId}
                 value={form.category}
                 onChange={(event) => set('category', event.target.value as TaskCategory)}
+                invalid={Boolean(fieldErrors.category)}
               >
                 {CATEGORIES.map((category) => (
                   <option key={category} value={category}>
@@ -188,7 +261,9 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
                 ))}
               </Select>
             </Field>
+          </div>
 
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="Due Date" htmlFor={dueDateId} error={fieldErrors.due_date}>
               <div className="relative">
                 <Input
@@ -207,19 +282,25 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
             </Field>
 
             <Field
-              label="Time"
-              htmlFor={timeId}
+              label="Start Time"
+              htmlFor={startTimeId}
               hint="Optional"
-              error={fieldErrors.due_time}
+              error={fieldErrors.start_time}
             >
               <div className="relative">
                 <Input
-                  id={timeId}
+                  id={startTimeId}
                   type="time"
-                  value={form.due_time ?? ''}
-                  onChange={(event) => set('due_time', event.target.value)}
+                  value={form.start_time ?? ''}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    set('start_time', val);
+                    if (!form.due_time) {
+                      set('due_time', val);
+                    }
+                  }}
                   className="pr-9 [&::-webkit-calendar-picker-indicator]:opacity-0"
-                  invalid={Boolean(fieldErrors.due_time)}
+                  invalid={Boolean(fieldErrors.start_time)}
                 />
                 <Clock3
                   className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
@@ -227,6 +308,126 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
                 />
               </div>
             </Field>
+
+            <Field
+              label="End Time"
+              htmlFor={endTimeId}
+              hint="Optional"
+              error={fieldErrors.end_time}
+            >
+              <div className="relative">
+                <Input
+                  id={endTimeId}
+                  type="time"
+                  value={form.end_time ?? ''}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    set('end_time', val);
+                    if (form.reminder_target === 'end_time' || !form.due_time) {
+                      set('due_time', val);
+                    }
+                  }}
+                  className="pr-9 [&::-webkit-calendar-picker-indicator]:opacity-0"
+                  invalid={Boolean(fieldErrors.end_time)}
+                />
+                <Clock3
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                  aria-hidden
+                />
+              </div>
+            </Field>
+          </div>
+
+          {/* Email Reminders Box */}
+          <div className="mt-4 rounded-xl border border-line bg-surface-raised p-4 transition-all">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand-deep">
+                  <BellRing className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-ink">Email Reminders</p>
+                  <p className="text-[12px] text-muted">
+                    Automated email alerts before your task begins or ends
+                  </p>
+                </div>
+              </div>
+              <Toggle
+                label="Enable email reminders"
+                checked={Boolean(form.reminder_enabled)}
+                onChange={(enabled) => set('reminder_enabled', enabled)}
+              />
+            </div>
+
+            {form.reminder_enabled && (
+              <div className="mt-4 space-y-3.5 border-t border-line/70 pt-3.5">
+                <div>
+                  <p className="text-[12px] font-medium text-ink-soft">Remind me for</p>
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => set('reminder_target', 'start_time')}
+                      className={`flex flex-col rounded-lg border p-2.5 text-left transition-all ${
+                        form.reminder_target === 'start_time'
+                          ? 'border-brand bg-brand-tint/50 text-brand-deep'
+                          : 'border-line bg-surface text-muted hover:border-brand/40 hover:text-ink'
+                      }`}
+                    >
+                      <span className="text-[12px] font-semibold">Upcoming Task</span>
+                      <span className="text-[11px] opacity-80">Remind before start time</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => set('reminder_target', 'end_time')}
+                      className={`flex flex-col rounded-lg border p-2.5 text-left transition-all ${
+                        form.reminder_target === 'end_time'
+                          ? 'border-brand bg-brand-tint/50 text-brand-deep'
+                          : 'border-line bg-surface text-muted hover:border-brand/40 hover:text-ink'
+                      }`}
+                    >
+                      <span className="text-[12px] font-semibold">Task Deadline</span>
+                      <span className="text-[11px] opacity-80">Remind before deadline ends</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field label="Reminder Interval" htmlFor={intervalId}>
+                    <Select
+                      id={intervalId}
+                      value={form.reminder_interval_minutes ?? 5}
+                      onChange={(event) => set('reminder_interval_minutes', Number(event.target.value))}
+                    >
+                      <option value={1}>Every 1 minute (Fast test)</option>
+                      <option value={5}>Every 5 minutes (Recommended)</option>
+                      <option value={10}>Every 10 minutes</option>
+                      <option value={15}>Every 15 minutes</option>
+                      <option value={30}>Every 30 minutes</option>
+                    </Select>
+                  </Field>
+
+                  <Field label="Total Reminders" htmlFor={countId}>
+                    <Select
+                      id={countId}
+                      value={form.reminder_count ?? 3}
+                      onChange={(event) => set('reminder_count', Number(event.target.value))}
+                    >
+                      <option value={1}>1 email</option>
+                      <option value={2}>2 emails</option>
+                      <option value={3}>3 emails (Recommended)</option>
+                      <option value={5}>5 emails</option>
+                    </Select>
+                  </Field>
+                </div>
+
+                <div className="flex items-start gap-2 rounded-lg bg-brand-tint/60 px-3 py-2 text-[12px] text-brand-deep">
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
+                  <p className="leading-relaxed">
+                    You will receive <strong>{reminderCount} email reminders</strong> ({scheduleOffsets.join(', ')} before) before your task {anchorLabel}.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">
@@ -267,7 +468,7 @@ export function AddTaskModal({ open, task, onClose }: AddTaskModalProps) {
             >
               <Textarea
                 id={notesId}
-                rows={4}
+                rows={3}
                 value={form.notes ?? ''}
                 onChange={(event) => set('notes', event.target.value)}
                 placeholder="Add additional notes..."
