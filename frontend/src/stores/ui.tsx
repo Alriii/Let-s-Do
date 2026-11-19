@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import type { Task } from '../lib/types';
 import { AddTaskModal } from '../components/modals/AddTaskModal';
 import { CancelTaskModal } from '../components/modals/CancelTaskModal';
-import { FeedAiModal } from '../components/modals/FeedAiModal';
 import { PreferencesModal } from '../components/modals/PreferencesModal';
 
 interface UIContextValue {
@@ -10,7 +9,6 @@ interface UIContextValue {
   openEditTask: (task: Task) => void;
   openCancelTask: (task: Task) => void;
   openPreferences: () => void;
-  openFeedAi: () => void;
 }
 
 const UIContext = createContext<UIContextValue | null>(null);
@@ -20,7 +18,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [cancellingTask, setCancellingTask] = useState<Task | null>(null);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
-  const [feedAiOpen, setFeedAiOpen] = useState(false);
 
   const openAddTask = useCallback(() => {
     setEditingTask(null);
@@ -40,13 +37,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setPreferencesOpen(true);
   }, []);
 
-  const openFeedAi = useCallback(() => {
-    setFeedAiOpen(true);
-  }, []);
-
   const value = useMemo<UIContextValue>(
-    () => ({ openAddTask, openEditTask, openCancelTask, openPreferences, openFeedAi }),
-    [openAddTask, openEditTask, openCancelTask, openPreferences, openFeedAi],
+    () => ({ openAddTask, openEditTask, openCancelTask, openPreferences }),
+    [openAddTask, openEditTask, openCancelTask, openPreferences],
   );
 
   return (
@@ -64,7 +57,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
         task={cancellingTask}
         onClose={() => setCancellingTask(null)}
       />
-      <FeedAiModal open={feedAiOpen} onClose={() => setFeedAiOpen(false)} />
       <PreferencesModal open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
     </UIContext.Provider>
   );

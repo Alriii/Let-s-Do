@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Bot, CalendarClock, CircleCheckBig, House, Sparkles, X } from 'lucide-react';
+import { Bot, CalendarClock, CircleCheckBig, House, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import botanicalPlantImg from '../../assets/botanical-plant.png';
 import logoImg from '../../assets/logo.png';
@@ -14,7 +14,7 @@ const NAV_ITEMS = [
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const { openAddTask, openFeedAi } = useUI();
+  const { openAddTask } = useUI();
 
   return (
     <div className="flex h-full flex-col justify-between px-6 pb-8 pt-9 bg-surface text-ink transition-colors">
@@ -52,7 +52,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </nav>
 
-        <div className="flex flex-col gap-2.5">
+        <div>
           <Button
             className="h-11 w-full rounded-xl"
             onClick={() => {
@@ -61,18 +61,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             }}
           >
             + Add Task
-          </Button>
-
-          <Button
-            variant="soft"
-            className="h-10 w-full rounded-xl gap-2 text-xs font-semibold text-brand-deep hover:border-brand/40"
-            onClick={() => {
-              onNavigate?.();
-              openFeedAi();
-            }}
-          >
-            <Sparkles className="h-3.5 w-3.5 text-brand" />
-            Feed AI / Syllabus
           </Button>
         </div>
       </div>
