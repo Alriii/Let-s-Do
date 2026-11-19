@@ -1,8 +1,6 @@
 import { Menu, Plus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { useSearch } from '../../stores/search';
 import { useUI } from '../../stores/ui';
-import { SearchInput } from '../ui/Field';
 import { ProfileMenu } from './ProfileMenu';
 
 const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
@@ -26,7 +24,6 @@ const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
 
 export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const { pathname } = useLocation();
-  const { query, setQuery } = useSearch();
   const { openAddTask } = useUI();
   const copy = PAGE_COPY[pathname] ?? {
     title: 'Your Workspace',
@@ -55,13 +52,6 @@ export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-        <SearchInput
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search tasks or tags..."
-          aria-label="Search tasks"
-          wrapperClassName="hidden w-44 md:block lg:w-48 xl:w-56"
-        />
         <button
           type="button"
           onClick={openAddTask}
