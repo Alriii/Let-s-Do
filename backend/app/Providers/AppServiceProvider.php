@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Mail\GmailApiTransport;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -23,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // register Gmail API as a custom mail transport
+        Mail::extend('gmail', function () {
+            return new GmailApiTransport(
+                clientId: config('services.gmail.client_id'),
+                clientSecret: config('services.gmail.client_secret'),
+                refreshToken: config('services.gmail.refresh_token'),
+            );
+        });
+
         // Brute-force / email-bombing protection for the auth endpoints.
         RateLimiter::for('auth-login', fn (Request $request) => Limit::perMinute(5)
             ->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
