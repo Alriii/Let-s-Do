@@ -66,13 +66,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="flex flex-col items-center gap-4">
-        <div className="relative flex h-[90px] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-brand-tint to-brand-soft border border-line">
-          <img
-            src={botanicalPlantImg}
-            alt="Botanical Plant"
-            className="h-[90px] w-auto object-contain"
-          />
-        </div>
+        <img
+          src={botanicalPlantImg}
+          alt="Botanical Plant"
+          className="h-[90px] w-[120px] object-contain"
+        />
         <p className="max-w-[190px] text-center text-[11px] leading-4 text-muted">
           Rush and you will break,
           <br />

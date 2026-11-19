@@ -33,13 +33,13 @@ export function MetricCard({
         <span className="block text-[26px] font-bold leading-none tracking-[-0.02em] text-ink">
           {value}
         </span>
-        <span className="mt-1 block truncate text-[13px] text-muted">{label}</span>
+        <span className="mt-0.5 block truncate text-[13px] text-muted">{label}</span>
       </span>
     </>
   );
 
   const className = clsx(
-    'flex h-24 w-full items-center gap-4 rounded-[18px] border bg-surface px-5 text-left',
+    'flex h-24 w-full items-center gap-[18px] rounded-[18px] border bg-surface px-6 text-left',
     active ? 'border-brand/40' : 'border-line',
     onClick && 'transition-colors hover:border-brand/40 hover:bg-surface-2',
   );

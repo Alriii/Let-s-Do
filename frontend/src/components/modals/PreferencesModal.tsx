@@ -221,6 +221,16 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
   };
 
   const uploadAvatar = async (file: File) => {
+    if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name)) {
+      toast.error('Please select an image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('Image is too large. Please select a photo under 20 MB.');
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
@@ -234,7 +244,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
     } catch (caught) {
       const msg =
         caught instanceof ApiError
-          ? caught.firstError('avatar') ?? caught.message
+          ? caught.firstError('avatar') ?? caught.firstError() ?? caught.message
           : 'Unable to upload that image.';
       setError(msg);
       toast.error(msg);

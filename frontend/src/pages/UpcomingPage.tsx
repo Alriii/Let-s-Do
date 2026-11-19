@@ -142,7 +142,7 @@ export function UpcomingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
         <MetricCard
           icon={<CalendarRange className="h-7 w-7" aria-hidden />}
           value={isLoading ? '—' : (data?.summary.total ?? 0)}

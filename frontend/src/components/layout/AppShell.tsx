@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             >
               <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
-              <main className={clsx(isChat ? 'flex-1 min-h-0 flex flex-col pt-1' : 'pt-6')}>
+              <main className={clsx(isChat ? 'flex-1 min-h-0 flex flex-col pt-1' : 'pt-8')}>
                 {children}
               </main>
             </div>

@@ -67,7 +67,7 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6">
       <AiHolidayBanner />
 
-      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
         <MetricCard
           icon={<ListTodo className="h-7 w-7" aria-hidden />}
           value={isLoading ? '—' : (data?.metrics.today_total ?? 0)}

@@ -253,8 +253,15 @@ class AuthController extends Controller
      */
     public function uploadAvatar(Request $request): JsonResponse
     {
+        if ($request->hasFile('avatar') && ! $request->file('avatar')->isValid()) {
+            return response()->json([
+                'message' => 'The uploaded file could not be processed. Please choose an image under 20MB.',
+                'errors' => ['avatar' => ['The uploaded image file is invalid or too large.']],
+            ], 422);
+        }
+
         $validated = $request->validate([
-            'avatar' => ['required', 'file', 'image', 'max:10240'],
+            'avatar' => ['required', 'file', 'image', 'max:20480'],
         ]);
 
         $user = $request->user();
