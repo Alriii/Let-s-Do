@@ -173,7 +173,7 @@ export function bestMilestone(tasks: Task[]): Task | null {
 
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
 
-  return [...pending].sort((a, b) => {
+  return pending.toSorted((a, b) => {
     const byPriority = rank[a.priority] - rank[b.priority];
 
     if (byPriority !== 0) {

@@ -765,7 +765,7 @@ export function AiChatPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       void handleSend();
     }
@@ -862,7 +862,7 @@ export function AiChatPage() {
     const aiMessageId = crypto.randomUUID();
 
     // Check if user is affirming a pending schedule confirmation from Lumi's last response
-    const lastAiMsg = [...messages].reverse().find(
+    const lastAiMsg = messages.findLast(
       (m) => m.role === 'model' && m.proposedSchedule && !m.proposedSchedule.imported,
     );
     const isAffirmation = /^(yes|yeah|yep|sure|ok|okay|confirm|add|add them|add it|do it|go ahead|please add)/i.test(
