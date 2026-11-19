@@ -7,17 +7,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Fetches current weather + 7-day forecast from Open-Meteo (no API key required).
- * Default coordinates: Metro Manila, Philippines (14.5995°N, 120.9842°E).
- *
- * Data is cached for 30 minutes to avoid unnecessary API calls.
+ * Fetches current weather + forecast worldwide from Open-Meteo (no API key required).
+ * Supports automatic geocoding for ANY city or region across the Philippines and globally.
+ * Data is cached to ensure fast, responsive answers.
  */
 class WeatherService
 {
-    /** Metro Manila, Philippines */
+    /** Default: Metro Manila, Philippines */
     private const DEFAULT_LAT = 14.5995;
     private const DEFAULT_LON = 120.9842;
-    private const DEFAULT_CITY = 'Metro Manila';
+    private const DEFAULT_CITY = 'Metro Manila, Philippines';
     private const DEFAULT_TIMEZONE = 'Asia/Manila';
 
     /**
@@ -49,50 +48,160 @@ class WeatherService
     ];
 
     /**
-     * Fetch current + 3-day forecast for the given city coordinates.
-     * Falls back to Metro Manila if no coordinates supplied.
+     * Geocode any place name globally using Open-Meteo Geocoding API.
+     * Free, fast, and no API key required.
      *
-     * @param float|null $lat   Latitude  (e.g. 14.5995)
-     * @param float|null $lon   Longitude (e.g. 120.9842)
-     * @param string     $city  Human-readable city name for display
+     * @return array{name: string, latitude: float, longitude: float, country: string, timezone: string, display: string}|null
+     */
+    public function geocode(string $query): ?array
+    {
+        $clean = trim(preg_replace('/[^\w\s\-\,]/u', '', $query));
+        if (strlen($clean) < 2) {
+            return null;
+        }
+
+        $cacheKey = 'geocode:' . md5(strtolower($clean));
+
+        return Cache::remember($cacheKey, 86400 * 7, function () use ($clean) {
+            try {
+                $url = 'https://geocoding-api.open-meteo.com/v1/search?' . http_build_query([
+                    'name'     => $clean,
+                    'count'    => 1,
+                    'language' => 'en',
+                    'format'   => 'json',
+                ]);
+
+                $res = Http::timeout(6)->get($url);
+                if (! $res->successful()) {
+                    return null;
+                }
+
+                $first = $res->json('results.0');
+                if (! $first) {
+                    return null;
+                }
+
+                $name    = $first['name'] ?? $clean;
+                $country = $first['country'] ?? '';
+                $admin   = $first['admin1'] ?? '';
+                $display = trim("{$name}" . ($admin ? ", {$admin}" : '') . ($country ? ", {$country}" : ''));
+
+                return [
+                    'name'      => $name,
+                    'latitude'  => (float) $first['latitude'],
+                    'longitude' => (float) $first['longitude'],
+                    'country'   => $country,
+                    'timezone'  => $first['timezone'] ?? 'auto',
+                    'display'   => $display,
+                ];
+            } catch (\Throwable $e) {
+                Log::warning("WeatherService::geocode error: {$e->getMessage()}");
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Fetch current + 3-day forecast for the given city coordinates or name.
      */
     public function getWeather(
         ?float $lat = null,
         ?float $lon = null,
         string $city = self::DEFAULT_CITY,
+        string $timezone = self::DEFAULT_TIMEZONE,
     ): ?array {
         $lat = $lat ?? self::DEFAULT_LAT;
         $lon = $lon ?? self::DEFAULT_LON;
 
         $cacheKey = "weather:{$lat}:{$lon}";
 
-        return Cache::remember($cacheKey, 1800, function () use ($lat, $lon, $city) {
-            return $this->fetch($lat, $lon, $city);
+        return Cache::remember($cacheKey, 1800, function () use ($lat, $lon, $city, $timezone) {
+            return $this->fetch($lat, $lon, $city, $timezone);
         });
     }
 
     /**
-     * Build a concise, Lumi-ready text summary of the weather for injection
-     * into the chat system prompt.
-     *
-     * @param float|null $lat
-     * @param float|null $lon
-     * @param string     $city
+     * Fetch weather for any named city globally.
      */
-    public function getPromptContext(
-        ?float $lat = null,
-        ?float $lon = null,
-        string $city = self::DEFAULT_CITY,
-    ): string {
-        $data = $this->getWeather($lat, $lon, $city);
-
-        if (! $data) {
-            return "Weather data is currently unavailable.";
+    public function getWeatherForNamedPlace(string $place): ?array
+    {
+        $geo = $this->geocode($place);
+        if (! $geo) {
+            return null;
         }
 
+        return $this->getWeather($geo['latitude'], $geo['longitude'], $geo['display'], $geo['timezone']);
+    }
+
+    /**
+     * Build context for Lumi based on the user's message.
+     * If the message asks about a specific city or region, geocodes that place and fetches live radar.
+     * Otherwise defaults to the user's home area (Metro Manila / Philippines).
+     */
+    public function getPromptContextForMessage(?string $userMessage = null): string
+    {
+        if ($userMessage) {
+            $extractedPlace = $this->extractLocationFromText($userMessage);
+            if ($extractedPlace) {
+                $geo = $this->geocode($extractedPlace);
+                if ($geo) {
+                    $weather = $this->getWeather($geo['latitude'], $geo['longitude'], $geo['display'], $geo['timezone']);
+                    if ($weather) {
+                        return $this->formatWeatherContext($weather, "RADAR DETECTED FOR REQUESTED LOCATION ({$geo['display']})");
+                    }
+                }
+            }
+        }
+
+        // Default local area
+        $defaultWeather = $this->getWeather();
+        $defaultContext = $defaultWeather
+            ? $this->formatWeatherContext($defaultWeather, "LOCAL WEATHER RADAR (Metro Manila, Philippines)")
+            : "Weather data is currently updating.";
+
+        return $defaultContext . "\nNOTE: Lumi's weather radar is worldwide. If the user asks about weather anywhere in the world, use your knowledge and remind them you can check any place globally.";
+    }
+
+    /**
+     * Extract a potential place name from a natural language question.
+     */
+    private function extractLocationFromText(string $text): ?string
+    {
+        // Common patterns: "weather in Baguio", "raining in Cebu?", "forecast for Tokyo"
+        if (preg_match('/\b(?:weather|rain|raining|forecast|sunny|cloudy|temperature|climate)\s+(?:in|at|for|around)\s+([a-zA-Z\s]{2,30}?)(?:\?|\.|\!|\band\b|\btoday\b|\btomorrow\b|$)/i', $text, $matches)) {
+            return trim($matches[1]);
+        }
+
+        if (preg_match('/\b(?:in|at)\s+([a-zA-Z\s]{2,25})\s+(?:weather|forecast|schedule)\b/i', $text, $matches)) {
+            return trim($matches[1]);
+        }
+
+        // Check for common Philippine or world cities directly mentioned
+        $places = [
+            'Baguio', 'Cebu', 'Davao', 'Tagaytay', 'Iloilo', 'Bacolod', 'Angeles', 'Subic',
+            'Palawan', 'Boracay', 'Siargao', 'Zamboanga', 'Cagayan de Oro', 'Batangas',
+            'Laguna', 'Cavite', 'Pampanga', 'Bicol', 'Naga', 'Legazpi', 'Vigan',
+            'Quezon City', 'Makati', 'Taguig', 'Pasig', 'Mandaluyong', 'Manila',
+            'Tokyo', 'Singapore', 'London', 'Paris', 'New York', 'Seoul', 'Sydney', 'Bangkok', 'Hong Kong'
+        ];
+
+        foreach ($places as $place) {
+            if (preg_match('/\b' . preg_quote($place, '/') . '\b/i', $text)) {
+                return $place;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Format a weather array into a concise, readable block for Lumi.
+     */
+    private function formatWeatherContext(array $data, string $header): string
+    {
         $cur = $data['current'];
         $lines = [
-            "WEATHER ({$city}, as of {$cur['time']}):",
+            "{$header} (as of {$cur['time']}):",
             "  Current: {$cur['emoji']} {$cur['label']}, {$cur['temperature']}°C, feels like {$cur['apparent_temperature']}°C, humidity {$cur['humidity']}%, wind {$cur['wind_speed']} km/h.",
         ];
 
@@ -116,12 +225,12 @@ class WeatherService
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-    private function fetch(float $lat, float $lon, string $city): ?array
+    private function fetch(float $lat, float $lon, string $city, string $timezone): ?array
     {
         $url = 'https://api.open-meteo.com/v1/forecast?' . http_build_query([
             'latitude'      => $lat,
             'longitude'     => $lon,
-            'timezone'      => self::DEFAULT_TIMEZONE,
+            'timezone'      => $timezone,
             'current'       => 'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day',
             'hourly'        => 'temperature_2m,weather_code,precipitation_probability',
             'daily'         => 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum',
@@ -148,7 +257,6 @@ class WeatherService
         $wmo = self::WMO_CODES[$wmoCode] ?? ['label' => 'Unknown', 'emoji' => '🌡️'];
         $isDay = (bool) ($cur['is_day'] ?? 1);
 
-        // If clear sky at night, swap to moon emoji
         if ($wmoCode === 0 && ! $isDay) {
             $wmo['emoji'] = '🌙';
         }
@@ -218,9 +326,6 @@ class WeatherService
         ];
     }
 
-    /**
-     * Summarise today's hourly array: peak/trough temps, rain window.
-     */
     private function hourlyPeaks(array $hours): array
     {
         $maxTemp = -999; $minTemp = 999;
