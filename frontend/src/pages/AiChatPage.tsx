@@ -766,9 +766,9 @@ export function AiChatPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] flex-col">
+    <div className="flex flex-1 min-h-0 flex-col rounded-[20px] border border-line bg-surface shadow-xs overflow-hidden">
       {/* ── Header ── */}
-      <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-4">
+      <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-soft border border-brand/30">
             <Bot className="h-5 w-5 text-brand" aria-hidden />
@@ -799,8 +799,8 @@ export function AiChatPage() {
         🔒 Focused on <strong>task planning, syllabus breakdown, and Philippine holidays</strong>. Attach notes or files below!
       </div>
 
-      {/* ── Messages Stream ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+      {/* ── Messages Stream (Only this section scrolls) ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 sm:px-6">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft border border-brand/30">

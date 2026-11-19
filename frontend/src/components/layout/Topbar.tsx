@@ -20,6 +20,10 @@ const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
     title: 'Completed Achievements',
     subtitle: 'A record of the progress you have already made.',
   },
+  '/ai-chat': {
+    title: 'AI Productivity Chat',
+    subtitle: 'Chat with LetsDo AI, upload course syllabi, and import scheduled tasks.',
+  },
 };
 
 export function Topbar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
