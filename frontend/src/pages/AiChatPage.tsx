@@ -23,6 +23,8 @@ import { api, ApiError } from '../lib/api';
 import { categoryStyles, priorityStyles } from '../lib/format';
 import type { AiConversationDetail, AiConversationSummary, ParseNotesResponse, TaskInput } from '../lib/types';
 import { useToast } from '../components/ui/Toast';
+import { Avatar } from '../components/ui/Avatar';
+import { useAuth } from '../stores/auth';
 import botAvatarImg from '../assets/bot-avatar.png';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -512,15 +514,19 @@ function Bubble({
   onDeselectAllSchedule?: () => void;
   onImportSchedule?: () => void;
 }) {
+  const { user } = useAuth();
   const isUser = msg.role === 'user';
 
   return (
     <div className={`flex gap-3.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
       {isUser ? (
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-xs">
-          <span className="text-xs font-bold leading-none">YOU</span>
-        </div>
+        <Avatar
+          name={user?.name ?? 'You'}
+          src={user?.avatar_url}
+          size={32}
+          className="mt-0.5 border border-brand/35 shadow-xs"
+        />
       ) : (
         <img
           src={botAvatarImg}
