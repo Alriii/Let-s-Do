@@ -1,6 +1,16 @@
-const BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ??
-  'http://127.0.0.1:8000/api/v1';
+function resolveBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim().replace(/\/$/, '');
+  if (!envUrl) {
+    return 'http://127.0.0.1:8000/api/v1';
+  }
+  // Automatically normalize e.g. "https://let-s-do.onrender.com" to ".../api/v1"
+  if (!envUrl.includes('/api')) {
+    return `${envUrl}/api/v1`;
+  }
+  return envUrl;
+}
+
+const BASE_URL = resolveBaseUrl();
 
 const TOKEN_KEY = 'letsdo.token';
 
