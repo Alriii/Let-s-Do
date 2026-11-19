@@ -120,17 +120,17 @@ function ChatTaskCard({
 
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
-          <p className="text-[13px] font-semibold text-ink leading-snug">{task.title}</p>
-          <div className="flex shrink-0 items-center gap-1">
+          <p className="text-base font-semibold text-ink leading-snug">{task.title}</p>
+          <div className="flex shrink-0 items-center gap-1.5">
             <span
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+              className={`rounded-md px-2 py-0.5 text-xs font-bold ${
                 priorityStyles[task.priority]
               }`}
             >
               {task.priority}
             </span>
             <span
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+              className={`rounded-md px-2 py-0.5 text-xs font-medium ${
                 categoryStyles[task.category]
               }`}
             >
@@ -139,14 +139,14 @@ function ChatTaskCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-muted">
+        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-muted">
           <span className="flex items-center gap-1 font-medium text-ink-soft">
-            <Calendar className="h-3 w-3 text-brand" aria-hidden />
+            <Calendar className="h-3.5 w-3.5 text-brand" aria-hidden />
             {task.due_date}
           </span>
           {task.start_time && (
             <span className="flex items-center gap-1">
-              <Clock3 className="h-3 w-3" aria-hidden />
+              <Clock3 className="h-3.5 w-3.5" aria-hidden />
               {task.start_time.slice(0, 5)}
               {task.end_time ? ` – ${task.end_time.slice(0, 5)}` : ''}
             </span>
@@ -155,7 +155,7 @@ function ChatTaskCard({
         </div>
 
         {task.notes && (
-          <p className="line-clamp-1 text-[11px] text-muted/80">{task.notes}</p>
+          <p className="line-clamp-1 text-xs text-muted/80">{task.notes}</p>
         )}
       </div>
     </div>
@@ -183,45 +183,45 @@ function ExtractedScheduleReview({
   return (
     <div className="mt-3.5 space-y-3.5 border-t border-line/70 pt-3">
       {/* File Badge & Summary */}
-      <div className="rounded-xl border border-brand/25 bg-brand-tint/30 p-3">
+      <div className="rounded-xl border border-brand/25 bg-brand-tint/30 p-3.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand">
-              <FileText className="h-3.5 w-3.5" aria-hidden />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand">
+              <FileText className="h-4 w-4" aria-hidden />
             </div>
-            <span className="truncate text-xs font-semibold text-brand-deep">
+            <span className="truncate text-sm font-semibold text-brand-deep">
               {doc.fileName}
             </span>
-            <span className="shrink-0 text-[10px] text-muted">
+            <span className="shrink-0 text-xs text-muted">
               ({formatFileSize(doc.fileSize)})
             </span>
           </div>
-          <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand-deep">
+          <span className="shrink-0 rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand-deep">
             {count} / {doc.tasks.length} selected
           </span>
         </div>
-        <p className="mt-1.5 text-xs text-ink leading-relaxed">{doc.summary}</p>
+        <p className="mt-2 text-sm text-ink leading-relaxed">{doc.summary}</p>
       </div>
 
       {/* Truncation warning if applicable */}
       {doc.truncatedNotice && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
           <span>{doc.truncatedNotice}</span>
         </div>
       )}
 
       {/* Tasks review list */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Extracted Tasks & Deadlines
           </span>
           {!doc.imported && (
             <button
               type="button"
               onClick={allSelected ? onDeselectAll : onSelectAll}
-              className="text-[11px] font-semibold text-brand hover:underline"
+              className="text-xs font-semibold text-brand hover:underline"
             >
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>
@@ -242,10 +242,10 @@ function ExtractedScheduleReview({
       </div>
 
       {/* Action / Success Banner */}
-      <div className="pt-1">
+      <div className="pt-1.5">
         {doc.imported ? (
-          <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft px-3.5 py-2.5 text-xs font-semibold text-brand-deep">
-            <CheckCircle2 className="h-4 w-4 text-brand" aria-hidden />
+          <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-deep">
+            <CheckCircle2 className="h-4.5 w-4.5 text-brand" aria-hidden />
             <span>
               {count} task{count !== 1 ? 's' : ''} added to your schedule! You can view them in Home or Upcoming.
             </span>
@@ -255,16 +255,16 @@ function ExtractedScheduleReview({
             type="button"
             disabled={count === 0 || doc.importing}
             onClick={onImport}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {doc.importing ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Adding tasks to schedule…
               </>
             ) : (
               <>
-                <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
+                <CalendarPlus className="h-4 w-4" aria-hidden />
                 Add {count} Selected Task{count !== 1 ? 's' : ''} to Schedule
               </>
             )}
@@ -290,14 +290,14 @@ function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: str
     <div className="space-y-3 py-1" aria-busy="true">
       {/* 3-step pills inside the message response */}
       {step !== 'thinking' && (
-        <div className="flex items-center gap-1.5 text-[10px]">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           {stepsMeta.map((s, i) => {
             const isDone = i < currentIdx;
             const isCurrent = i === currentIdx;
             return (
               <div key={s.id} className="flex items-center gap-1.5">
                 <span
-                  className={`flex h-5 items-center gap-1 rounded-full px-2 font-medium transition-colors ${
+                  className={`flex h-6 items-center gap-1 rounded-full px-2.5 font-medium transition-colors ${
                     isDone
                       ? 'bg-brand/15 text-brand font-bold'
                       : isCurrent
@@ -306,7 +306,7 @@ function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: str
                   }`}
                 >
                   {isDone ? (
-                    <Check className="h-2.5 w-2.5 stroke-[3]" />
+                    <Check className="h-3 w-3 stroke-[3]" />
                   ) : (
                     <span>{i + 1}</span>
                   )}
@@ -322,8 +322,8 @@ function InlineProcessingBox({ step, label }: { step: ProcessingStep; label: str
       )}
 
       {/* Animated status row */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface/80 px-3.5 py-2.5 text-xs text-ink">
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-brand shrink-0" aria-hidden />
+      <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface/80 px-4 py-3 text-sm text-ink">
+        <Loader2 className="h-4 w-4 animate-spin text-brand shrink-0" aria-hidden />
         <span className="font-medium text-ink-soft">{label}</span>
       </div>
     </div>
@@ -348,25 +348,25 @@ function Bubble({
   const isUser = msg.role === 'user';
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`flex gap-3.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
       <div
-        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
           isUser
             ? 'bg-brand text-white shadow-xs'
             : 'bg-brand-soft border border-brand/30 text-brand'
         }`}
       >
         {isUser ? (
-          <span className="text-[10px] font-bold leading-none">YOU</span>
+          <span className="text-xs font-bold leading-none">YOU</span>
         ) : (
-          <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden />
+          <Sparkles className="h-4 w-4 text-brand" aria-hidden />
         )}
       </div>
 
       {/* Bubble Container */}
       <div
-        className={`max-w-[85%] sm:max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+        className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-5 py-3.5 text-base sm:text-[16px] leading-[1.65] ${
           isUser
             ? 'bg-brand text-white rounded-tr-xs shadow-xs'
             : msg.blocked
@@ -376,10 +376,10 @@ function Bubble({
       >
         {/* User attachment pill */}
         {isUser && msg.attachment && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white">
-            <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <div className="mb-2.5 flex items-center gap-2 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white">
+            <Paperclip className="h-4 w-4 shrink-0" aria-hidden />
             <span className="truncate">{msg.attachment.name}</span>
-            <span className="shrink-0 text-white/70">
+            <span className="shrink-0 text-white/80 text-xs">
               ({formatFileSize(msg.attachment.size)})
             </span>
           </div>
@@ -770,12 +770,12 @@ export function AiChatPage() {
       {/* ── Header ── */}
       <div className="flex shrink-0 items-center justify-between border-b border-line bg-surface px-6 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-soft border border-brand/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft border border-brand/30">
             <Bot className="h-5 w-5 text-brand" aria-hidden />
           </div>
           <div>
-            <h1 className="text-[15px] font-bold text-ink">LetsDo AI</h1>
-            <p className="text-[11px] text-muted">
+            <h1 className="text-base sm:text-lg font-bold text-ink">LetsDo AI</h1>
+            <p className="text-xs sm:text-sm text-muted">
               Task management &amp; schedule assistant • Philippine Calendar aware 🇵🇭
             </p>
           </div>
@@ -785,17 +785,17 @@ export function AiChatPage() {
           <button
             type="button"
             onClick={clearChat}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-muted hover:bg-surface-2 hover:text-ink transition-colors"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted hover:bg-surface-2 hover:text-ink transition-colors"
             title="Clear conversation"
           >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            <Trash2 className="h-4 w-4" aria-hidden />
             Clear
           </button>
         )}
       </div>
 
       {/* ── Scope Notice ── */}
-      <div className="shrink-0 bg-brand-tint border-b border-brand/20 px-6 py-2 text-[11px] text-brand-deep">
+      <div className="shrink-0 bg-brand-tint border-b border-brand/20 px-6 py-2.5 text-xs sm:text-sm text-brand-deep">
         🔒 Focused on <strong>task planning, syllabus breakdown, and Philippine holidays</strong>. Attach notes or files below!
       </div>
 
@@ -807,20 +807,20 @@ export function AiChatPage() {
               <Sparkles className="h-8 w-8 text-brand" aria-hidden />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-ink">
+              <h2 className="text-xl sm:text-2xl font-bold text-ink">
                 Hey {firstName}! How can I help with your schedule?
               </h2>
-              <p className="mt-1 text-sm text-muted max-w-sm">
+              <p className="mt-2 text-sm sm:text-base text-muted max-w-md leading-relaxed">
                 Ask productivity questions, or click the paperclip below to feed a syllabus/rubric and import tasks with 3 email reminders.
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 w-full max-w-md">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 w-full max-w-lg">
               {STARTERS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => void handleSend(s)}
-                  className="rounded-xl border border-line bg-surface px-4 py-2.5 text-left text-xs text-ink hover:border-brand/40 hover:bg-brand-soft transition-colors"
+                  className="rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm font-medium text-ink hover:border-brand/40 hover:bg-brand-soft transition-colors shadow-2xs"
                 >
                   {s}
                 </button>
@@ -828,7 +828,7 @@ export function AiChatPage() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+          <div className="flex flex-col gap-5 max-w-2xl mx-auto">
             {messages.map((msg) => (
               <Bubble
                 key={msg.id}
@@ -840,7 +840,7 @@ export function AiChatPage() {
               />
             ))}
             {error && (
-              <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-700">
+              <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
                 {error}
               </p>
             )}
@@ -851,32 +851,32 @@ export function AiChatPage() {
 
       {/* ── Chat Input Bar with Paperclip ── */}
       <div className="shrink-0 border-t border-line bg-surface px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-col gap-2">
+        <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
           {/* File attachment preview chip */}
           {attachedFile && (
-            <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-tint/50 px-3.5 py-2 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="h-4 w-4 text-brand shrink-0" aria-hidden />
+            <div className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand-tint/60 px-4 py-2.5 text-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileText className="h-4.5 w-4.5 text-brand shrink-0" aria-hidden />
                 <span className="truncate font-semibold text-brand-deep">
                   {attachedFile.name}
                 </span>
-                <span className="shrink-0 text-[11px] text-muted">
+                <span className="shrink-0 text-xs text-muted">
                   ({formatFileSize(attachedFile.size)})
                 </span>
               </div>
               <button
                 type="button"
                 onClick={removeAttachedFile}
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted hover:bg-brand/10 hover:text-ink transition-colors"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted hover:bg-brand/10 hover:text-ink transition-colors"
                 aria-label="Remove attached file"
               >
-                <X className="h-3 w-3" aria-hidden />
+                <X className="h-3.5 w-3.5" aria-hidden />
               </button>
             </div>
           )}
 
           {/* Input & Action buttons */}
-          <div className="flex items-end gap-2 sm:gap-3">
+          <div className="flex items-end gap-2.5 sm:gap-3">
             {/* Paperclip Button */}
             <input
               ref={fileInputRef}
@@ -895,7 +895,7 @@ export function AiChatPage() {
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-muted transition hover:border-brand/40 hover:bg-brand-soft hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40"
               aria-label="Attach document"
             >
-              <Paperclip className="h-4 w-4" aria-hidden />
+              <Paperclip className="h-4.5 w-4.5" aria-hidden />
             </button>
 
             {/* Textarea container */}
@@ -913,7 +913,7 @@ export function AiChatPage() {
                 rows={1}
                 maxLength={800}
                 disabled={isProcessing}
-                className="block w-full resize-none bg-transparent text-sm text-ink placeholder-muted outline-none disabled:opacity-50"
+                className="block w-full resize-none bg-transparent text-base text-ink placeholder-muted outline-none disabled:opacity-50"
                 aria-label="Chat message"
               />
             </div>
@@ -926,13 +926,13 @@ export function AiChatPage() {
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-xs transition hover:bg-brand-deep focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Send message"
             >
-              <Send className="h-4 w-4" aria-hidden />
+              <Send className="h-4.5 w-4.5" aria-hidden />
             </button>
           </div>
 
-          <p className="text-center text-[10px] text-muted">
-            Press <kbd className="rounded px-1 py-0.5 bg-surface-2 border border-line font-mono text-[9px]">Enter</kbd> to send ·{' '}
-            <kbd className="rounded px-1 py-0.5 bg-surface-2 border border-line font-mono text-[9px]">Shift+Enter</kbd> for new line · Supports PDF, Word, TXT
+          <p className="text-center text-xs text-muted">
+            Press <kbd className="rounded px-1.5 py-0.5 bg-surface-2 border border-line font-mono text-[10px]">Enter</kbd> to send ·{' '}
+            <kbd className="rounded px-1.5 py-0.5 bg-surface-2 border border-line font-mono text-[10px]">Shift+Enter</kbd> for new line · Supports PDF, Word, TXT
           </p>
         </div>
       </div>

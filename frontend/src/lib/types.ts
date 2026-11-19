@@ -2,6 +2,7 @@ export type TaskStatus = 'pending' | 'completed' | 'cancelled';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 export type TaskCategory = 'Work' | 'Personal' | 'Health' | 'Errands';
 export type Theme = 'light' | 'dark';
+export type TextSize = 'sm' | 'md' | 'lg' | 'xl';
 export type ReminderTarget = 'start_time' | 'end_time';
 
 export const CATEGORIES: TaskCategory[] = ['Work', 'Personal', 'Health', 'Errands'];

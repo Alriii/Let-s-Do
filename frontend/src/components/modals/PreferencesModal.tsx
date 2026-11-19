@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { Camera, Eye, EyeOff, Moon, Sun, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
-import type { ProfileResponse, Theme, User } from '../../lib/types';
+import type { ProfileResponse, TextSize, Theme, User } from '../../lib/types';
 import { useAuth } from '../../stores/auth';
 import { useToast } from '../ui/Toast';
 import { Avatar } from '../ui/Avatar';
@@ -26,6 +26,13 @@ const PASSWORD_RULES = [
   { label: 'Upper & lowercase', test: (value: string) => /[a-z]/.test(value) && /[A-Z]/.test(value) },
   { label: 'A number', test: (value: string) => /\d/.test(value) },
   { label: 'A symbol', test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+];
+
+const TEXT_SIZE_OPTIONS: { value: TextSize; label: string; desc: string }[] = [
+  { value: 'sm', label: 'Compact', desc: '14px' },
+  { value: 'md', label: 'Default', desc: '16px' },
+  { value: 'lg', label: 'Large', desc: '18px' },
+  { value: 'xl', label: 'Extra Large', desc: '20px' },
 ];
 
 function Toggle({
@@ -66,7 +73,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
-  const { user, setUser, applyTheme } = useAuth();
+  const { user, setUser, applyTheme, textSize, applyTextSize } = useAuth();
   const toast = useToast();
   const nameId = useFieldId('pref-name');
   const emailId = useFieldId('pref-email');
@@ -77,6 +84,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
 
   const [name, setName] = useState('');
   const [theme, setTheme] = useState<Theme>('light');
+  const [selectedTextSize, setSelectedTextSize] = useState<TextSize>(textSize);
   const [reminders, setReminders] = useState(true);
   const [digest, setDigest] = useState(true);
 
@@ -99,6 +107,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
 
     setName(user.name);
     setTheme(user.preferences.theme);
+    setSelectedTextSize(textSize);
     setReminders(user.preferences.task_reminders_enabled);
     setDigest(user.preferences.daily_digest_enabled);
     setCurrentPassword('');
@@ -106,16 +115,17 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
     setConfirmPassword('');
     setError(null);
     setFieldErrors({});
-  }, [open, user]);
+  }, [open, user, textSize]);
 
   const close = () => {
     if (saving || uploading) {
       return;
     }
 
-    // Revert live preview theme to saved theme if user cancels
+    // Revert live preview theme & text size to saved values if user cancels
     if (user) {
       applyTheme(user.preferences.theme);
+      applyTextSize(textSize);
     }
     onClose();
   };
@@ -123,6 +133,11 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
   const handleThemeChange = (selectedTheme: Theme) => {
     setTheme(selectedTheme);
     applyTheme(selectedTheme);
+  };
+
+  const handleTextSizeChange = (size: TextSize) => {
+    setSelectedTextSize(size);
+    applyTextSize(size);
   };
 
   const save = async () => {
@@ -179,6 +194,7 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
 
       setUser(response.user);
       applyTheme(response.user.preferences.theme);
+      applyTextSize(selectedTextSize);
       toast.success(
         newPassword
           ? 'Preferences and password updated successfully.'
@@ -359,6 +375,38 @@ export function PreferencesModal({ open, onClose }: PreferencesModalProps) {
                 </button>
               );
             })}
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[12px] font-semibold text-ink">Text Size &amp; Readability</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Scale app typography for comfortable reading across all screens.
+            </p>
+            <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4 rounded-[12px] border border-line-strong bg-surface-2 p-1.5">
+              {TEXT_SIZE_OPTIONS.map(({ value, label, desc }) => {
+                const active = selectedTextSize === value;
+
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleTextSizeChange(value)}
+                    aria-pressed={active}
+                    className={clsx(
+                      'flex h-12 flex-col items-center justify-center rounded-lg px-2 text-center transition-colors',
+                      active
+                        ? 'bg-surface font-semibold text-brand-strong border border-brand/30 shadow-sm'
+                        : 'text-muted hover:text-ink',
+                    )}
+                  >
+                    <span className="text-[13px] font-bold">
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-muted">{desc}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="my-5 h-px bg-line" />

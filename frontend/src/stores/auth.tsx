@@ -8,15 +8,24 @@ import {
   type ReactNode,
 } from 'react';
 import { api, ApiError, tokenStore } from '../lib/api';
-import type { LoginResponse, ProfileResponse, RegisterResponse, Theme, User } from '../lib/types';
+import type { LoginResponse, ProfileResponse, RegisterResponse, TextSize, Theme, User } from '../lib/types';
 
 const THEME_KEY = 'letsdo.theme';
+const TEXT_SIZE_KEY = 'letsdo.text_size';
+
+const TEXT_SIZES: Record<TextSize, string> = {
+  sm: '14px',
+  md: '16px',
+  lg: '18px',
+  xl: '20px',
+};
 
 type AuthStatus = 'loading' | 'authenticated' | 'guest';
 
 interface AuthContextValue {
   user: User | null;
   status: AuthStatus;
+  textSize: TextSize;
   login: (email: string, password: string) => Promise<LoginResponse>;
   register: (
     email: string,
@@ -29,6 +38,7 @@ interface AuthContextValue {
   refresh: () => Promise<void>;
   setUser: (user: User) => void;
   applyTheme: (theme: Theme) => void;
+  applyTextSize: (size: TextSize) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,11 +49,18 @@ function readStoredTheme(): Theme {
   return stored === 'dark' ? 'dark' : 'light';
 }
 
+function readStoredTextSize(): TextSize {
+  const stored = localStorage.getItem(TEXT_SIZE_KEY) as TextSize | null;
+
+  return stored && TEXT_SIZES[stored] ? stored : 'md';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>(() =>
     tokenStore.get() ? 'loading' : 'guest',
   );
+  const [textSize, setTextSizeState] = useState<TextSize>(() => readStoredTextSize());
 
   const applyTheme = useCallback((theme: Theme) => {
     const isDark = theme === 'dark';
@@ -51,6 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('light', !isDark);
     localStorage.setItem(THEME_KEY, theme);
   }, []);
+
+  const applyTextSize = useCallback((size: TextSize) => {
+    const pixelValue = TEXT_SIZES[size] || '16px';
+    document.documentElement.style.fontSize = pixelValue;
+    localStorage.setItem(TEXT_SIZE_KEY, size);
+    setTextSizeState(size);
+  }, []);
+
+  useEffect(() => {
+    applyTextSize(readStoredTextSize());
+  }, [applyTextSize]);
 
   const setUser = useCallback((next: User) => {
     setUserState(next);
@@ -134,8 +162,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, register, logout, refresh, setUser, applyTheme }),
-    [user, status, login, register, logout, refresh, setUser, applyTheme],
+    () => ({
+      user,
+      status,
+      textSize,
+      login,
+      register,
+      logout,
+      refresh,
+      setUser,
+      applyTheme,
+      applyTextSize,
+    }),
+    [user, status, textSize, login, register, logout, refresh, setUser, applyTheme, applyTextSize],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
