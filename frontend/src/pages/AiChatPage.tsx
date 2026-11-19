@@ -929,11 +929,6 @@ export function AiChatPage() {
               <Send className="h-4.5 w-4.5" aria-hidden />
             </button>
           </div>
-
-          <p className="text-center text-xs text-muted">
-            Press <kbd className="rounded px-1.5 py-0.5 bg-surface-2 border border-line font-mono text-[10px]">Enter</kbd> to send ·{' '}
-            <kbd className="rounded px-1.5 py-0.5 bg-surface-2 border border-line font-mono text-[10px]">Shift+Enter</kbd> for new line · Supports PDF, Word, TXT
-          </p>
         </div>
       </div>
     </div>
