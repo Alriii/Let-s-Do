@@ -57,9 +57,7 @@ class TaskReminderMail extends Mailable
      */
     public function content(): Content
     {
-        $fullName = e($this->task->user->name);
-        $firstName = e(Str::before($this->task->user->name, ' '));
-        $greetingName = $firstName !== '' ? $firstName : $fullName;
+        $greetingName = e($this->task->user->first_name ?: 'there');
         $title = e($this->task->title);
         $category = e($this->task->category);
         $priority = e($this->task->priority);

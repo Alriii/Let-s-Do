@@ -45,7 +45,7 @@ class DailyDigestMail extends Mailable
      */
     public function content(): Content
     {
-        $name = e($this->user->name);
+        $name = e($this->user->first_name ?: 'there');
         $todayRows = $this->renderRows($this->todayTasks);
         $overdueRows = $this->renderRows($this->overdueTasks);
 

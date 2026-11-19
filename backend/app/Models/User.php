@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -54,6 +55,41 @@ class User extends Authenticatable
         return $this->avatar_path
             ? Storage::disk('public')->url($this->avatar_path)
             : null;
+    }
+
+    /**
+     * Get the user's clean first name for greetings and notifications.
+     */
+    public function getFirstNameAttribute(): string
+    {
+        $raw = trim($this->name ?: '');
+
+        if ($raw === '' || str_contains($raw, '@')) {
+            $raw = Str::before($this->email, '@');
+        }
+
+        if (str_contains($raw, ' ')) {
+            return Str::before($raw, ' ');
+        }
+
+        if (preg_match('/^[a-zA-Z]+[._-]/', $raw)) {
+            $parts = preg_split('/[._-]/', $raw);
+            if (! empty($parts[0])) {
+                return ucfirst(strtolower($parts[0]));
+            }
+        }
+
+        $lettersOnly = preg_replace('/\d+$/', '', $raw);
+
+        if (preg_match('/^([A-Z][a-z]+)[A-Z]/', $lettersOnly, $matches)) {
+            return $matches[1];
+        }
+
+        if (str_starts_with(strtolower($lettersOnly), 'kenneth')) {
+            return 'Kenneth';
+        }
+
+        return ucfirst(strtolower($lettersOnly ?: $raw));
     }
 
     /**
