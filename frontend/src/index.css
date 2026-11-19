@@ -2,95 +2,150 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ─── Design Tokens ───────────────────────────────────────────────────────── */
 :root {
-  --canvas: #F8FAF7;
-  --surface: #ffffff;
-  --surface-2: #f2f6f3;
-  --ink: #252B29;
-  --ink-soft: #38423e;
-  --muted: #626e68;
-  --muted-2: #626e68;
-  --faint: #98a59f;
-  --line: #e4ebe6;
-  --line-strong: #d3ded6;
-  --brand: #45AA70;
-  --brand-strong: #174A32;
-  --brand-deep: #174A32;
-  --brand-soft: #DDF3E5;
-  --brand-tint: #eef8f2;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --info: #2563eb;
-  --info-soft: #eff6ff;
-  --amber: #d97706;
-  --amber-soft: #fef3c7;
-  --rose: #e07a68;
-  --rose-soft: #F5B8AD33;
-  --peach: #F5B8AD;
-  --peach-soft: #fdf1ef;
+  /* Surfaces */
+  --canvas:        #F8FAF7;
+  --surface:       #ffffff;
+  --surface-2:     #f2f6f3;
+
+  /* Ink */
+  --ink:           #252B29;
+  --ink-soft:      #38423e;
+  --muted:         #626e68;
+  --faint:         #98a59f;
+
+  /* Borders */
+  --line:          #e4ebe6;
+  --line-strong:   #d3ded6;
+
+  /* Brand — Leaf Green */
+  --brand:         #45AA70;
+  --brand-strong:  #174A32;
+  --brand-deep:    #174A32;
+  --brand-soft:    #DDF3E5;
+  --brand-tint:    #eef8f2;
+
+  /* Semantic status */
+  --danger:        #dc2626;
+  --danger-soft:   #fef2f2;
+  --info:          #2563eb;
+  --info-soft:     #eff6ff;
+  --amber:         #d97706;
+  --amber-soft:    #fef3c7;
+
+  /* Accent — Warm Peach / Coral */
+  --rose:          #e07a68;
+  --rose-soft:     #fdf1ef;
+  --peach:         #F5B8AD;
+  --peach-soft:    #fdf1ef;
+
+  /* Holiday markers (design-system aware, dark-mode overridden below) */
+  --holiday-regular-bg:     #fff0f0;
+  --holiday-regular-text:   #c0392b;
+  --holiday-regular-dot:    #e74c3c;
+  --holiday-regular-hover:  #ffe0e0;
+  --holiday-special-bg:     #fffbeb;
+  --holiday-special-text:   #92400e;
+  --holiday-special-dot:    #f59e0b;
+  --holiday-special-hover:  #fef3c7;
 }
 
-html.dark, :root.dark, .dark {
-  --canvas: #151917;
-  --surface: #252B29;
-  --surface-2: #2e3633;
-  --ink: #F8FAF7;
-  --ink-soft: #dce5df;
-  --muted: #9aa8a1;
-  --muted-2: #9aa8a1;
-  --faint: #6c7972;
-  --line: #333d39;
-  --line-strong: #414e48;
-  --brand: #45AA70;
-  --brand-strong: #78d29f;
-  --brand-deep: #DDF3E5;
-  --brand-soft: #174A32;
-  --brand-tint: #1c3d2b;
-  --danger: #f07878;
-  --danger-soft: #2a1a1a;
-  --info: #7aa7f0;
-  --info-soft: #1a2233;
-  --amber: #e8b34a;
-  --amber-soft: #2b2416;
-  --rose: #F5B8AD;
-  --rose-soft: #3d2420;
-  --peach: #F5B8AD;
-  --peach-soft: #3d2420;
+html.dark,
+:root.dark,
+.dark {
+  /* Surfaces */
+  --canvas:        #151917;
+  --surface:       #252B29;
+  --surface-2:     #2e3633;
+
+  /* Ink */
+  --ink:           #F8FAF7;
+  --ink-soft:      #dce5df;
+  --muted:         #9aa8a1;
+  --faint:         #6c7972;
+
+  /* Borders */
+  --line:          #333d39;
+  --line-strong:   #414e48;
+
+  /* Brand */
+  --brand:         #45AA70;
+  --brand-strong:  #78d29f;
+  --brand-deep:    #DDF3E5;
+  --brand-soft:    #174A32;
+  --brand-tint:    #1c3d2b;
+
+  /* Semantic status */
+  --danger:        #f07878;
+  --danger-soft:   #2a1a1a;
+  --info:          #7aa7f0;
+  --info-soft:     #1a2233;
+  --amber:         #e8b34a;
+  --amber-soft:    #2b2416;
+
+  /* Accent */
+  --rose:          #F5B8AD;
+  --rose-soft:     #3d2420;
+  --peach:         #F5B8AD;
+  --peach-soft:    #3d2420;
+
+  /* Holiday markers — dark-mode variants */
+  --holiday-regular-bg:     #3b1a1a;
+  --holiday-regular-text:   #f87171;
+  --holiday-regular-dot:    #ef4444;
+  --holiday-regular-hover:  #4a2020;
+  --holiday-special-bg:     #2d2410;
+  --holiday-special-text:   #fbbf24;
+  --holiday-special-dot:    #f59e0b;
+  --holiday-special-hover:  #3a2f10;
 }
 
+/* ─── Tailwind Theme Bridge ───────────────────────────────────────────────── */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --color-canvas: var(--canvas);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-muted: var(--muted);
-  --color-muted-2: var(--muted-2);
-  --color-faint: var(--faint);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-brand: var(--brand);
+  /* Surfaces */
+  --color-canvas:       var(--canvas);
+  --color-surface:      var(--surface);
+  --color-surface-2:    var(--surface-2);
+
+  /* Ink */
+  --color-ink:          var(--ink);
+  --color-ink-soft:     var(--ink-soft);
+  --color-muted:        var(--muted);
+  --color-faint:        var(--faint);
+
+  /* Borders */
+  --color-line:         var(--line);
+  --color-line-strong:  var(--line-strong);
+
+  /* Brand */
+  --color-brand:        var(--brand);
   --color-brand-strong: var(--brand-strong);
-  --color-brand-deep: var(--brand-deep);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-tint: var(--brand-tint);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-info: var(--info);
-  --color-info-soft: var(--info-soft);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
-  --color-rose: var(--rose);
-  --color-rose-soft: var(--rose-soft);
-  --color-peach: var(--peach);
-  --color-peach-soft: var(--peach-soft);
+  --color-brand-deep:   var(--brand-deep);
+  --color-brand-soft:   var(--brand-soft);
+  --color-brand-tint:   var(--brand-tint);
+
+  /* Semantic status */
+  --color-danger:       var(--danger);
+  --color-danger-soft:  var(--danger-soft);
+  --color-info:         var(--info);
+  --color-info-soft:    var(--info-soft);
+  --color-amber:        var(--amber);
+  --color-amber-soft:   var(--amber-soft);
+
+  /* Accent */
+  --color-rose:         var(--rose);
+  --color-rose-soft:    var(--rose-soft);
+  --color-peach:        var(--peach);
+  --color-peach-soft:   var(--peach-soft);
 
   --radius-card: 18px;
   --radius-pill: 14px;
 }
 
+/* ─── Base Reset & Global Styles ─────────────────────────────────────────── */
 @layer base {
   html,
   body,
@@ -99,23 +154,19 @@ html.dark, :root.dark, .dark {
   }
 
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
   }
 
   html.dark {
     color-scheme: dark;
   }
 
-  html.light {
-    color-scheme: light;
-  }
-
   body {
     margin: 0;
     background-color: var(--color-canvas);
     background-image:
-      radial-gradient(at 0% 0%, color-mix(in oklab, var(--color-brand-soft) 45%, transparent) 0px, transparent 48%),
-      radial-gradient(at 100% 100%, color-mix(in oklab, var(--color-peach) 12%, transparent) 0px, transparent 45%);
+      radial-gradient(at 0% 0%,   color-mix(in oklab, var(--color-brand-soft) 45%, transparent) 0px, transparent 48%),
+      radial-gradient(at 100% 100%, color-mix(in oklab, var(--color-peach)      12%, transparent) 0px, transparent 45%);
     background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -164,51 +215,51 @@ html.dark, :root.dark, .dark {
   }
 }
 
+/* ─── Keyframe Animations ─────────────────────────────────────────────────── */
 @keyframes letsdo-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes letsdo-scale-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes letsdo-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── Utility Classes ─────────────────────────────────────────────────────── */
 @layer utilities {
-  .animate-fade-in {
-    animation: letsdo-fade-in 140ms ease-out both;
+  .animate-fade-in  { animation: letsdo-fade-in  140ms ease-out both; }
+  .animate-scale-in { animation: letsdo-scale-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-slide-up { animation: letsdo-slide-up 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  /* Philippine holiday calendar cell variants (dark-mode safe via CSS vars) */
+  .cal-holiday-regular {
+    background-color: var(--holiday-regular-bg);
+    color: var(--holiday-regular-text);
+    font-weight: 600;
+  }
+  .cal-holiday-regular:hover {
+    background-color: var(--holiday-regular-hover);
+  }
+  .cal-holiday-special {
+    background-color: var(--holiday-special-bg);
+    color: var(--holiday-special-text);
+    font-weight: 600;
+  }
+  .cal-holiday-special:hover {
+    background-color: var(--holiday-special-hover);
   }
 
-  .animate-scale-in {
-    animation: letsdo-scale-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .animate-slide-up {
-    animation: letsdo-slide-up 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
+  .dot-holiday-regular  { background-color: var(--holiday-regular-dot); }
+  .dot-holiday-special  { background-color: var(--holiday-special-dot); }
 }
 
+/* ─── Component Classes ───────────────────────────────────────────────────── */
 @layer components {
   .card {
     background-color: var(--color-surface);
@@ -254,9 +305,7 @@ html.dark, :root.dark, .dark {
       background-color 140ms ease;
   }
 
-  .field-input::placeholder {
-    color: var(--color-faint);
-  }
+  .field-input::placeholder { color: var(--color-faint); }
 
   .field-input:focus {
     outline: none;

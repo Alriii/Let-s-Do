@@ -105,9 +105,9 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                       : isToday
                         ? 'border border-brand/50 font-bold text-brand-strong bg-brand-soft/60 hover:bg-brand-soft'
                         : isRegularHoliday && inMonth
-                          ? 'bg-rose-50/80 font-semibold text-rose-600 hover:bg-rose-100/80'
+                          ? 'cal-holiday-regular'
                           : isSpecialHoliday && inMonth
-                            ? 'bg-amber-50/80 font-semibold text-amber-700 hover:bg-amber-100/80'
+                            ? 'cal-holiday-special'
                             : inMonth
                               ? 'text-ink hover:bg-surface-2'
                               : 'text-faint/60 hover:bg-surface-2',
@@ -142,7 +142,7 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
                         <span
                           className={clsx(
                             'h-1 w-1 rounded-full',
-                            isRegularHoliday ? 'bg-rose-500' : 'bg-amber-500',
+                            isRegularHoliday ? 'dot-holiday-regular' : 'dot-holiday-special',
                           )}
                           aria-hidden
                         />
@@ -161,11 +161,11 @@ export function CalendarWidget({ selectedDate, onSelectDate }: CalendarWidgetPro
               Scheduled tasks
             </span>
             <span className="flex items-center gap-1.5 text-[10.5px] text-muted">
-              <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" aria-hidden />
+              <span className="h-2 w-2 rounded-full dot-holiday-regular shrink-0" aria-hidden />
               Regular holiday
             </span>
             <span className="flex items-center gap-1.5 text-[10.5px] text-muted">
-              <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" aria-hidden />
+              <span className="h-2 w-2 rounded-full dot-holiday-special shrink-0" aria-hidden />
               Special non-working
             </span>
           </div>
