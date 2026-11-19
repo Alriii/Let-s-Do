@@ -33,6 +33,8 @@
   --rose-soft:     #fdf1ef;
   --peach:         #F5B8AD;
   --peach-soft:    #fdf1ef;
+  --indigo:        #4f46e5;
+  --indigo-soft:   #eef2ff;
 
   /* holiday colors */
   --holiday-regular-bg:     #fff0f0;
@@ -78,6 +80,8 @@ html.dark,
   --rose-soft:     #3d2420;
   --peach:         #F5B8AD;
   --peach-soft:    #3d2420;
+  --indigo:        #818cf8;
+  --indigo-soft:   #1e1b4b;
 
   /* holiday colors dark */
   --holiday-regular-bg:     #3b1a1a;
@@ -123,6 +127,8 @@ html.dark,
   --color-rose-soft:    var(--rose-soft);
   --color-peach:        var(--peach);
   --color-peach-soft:   var(--peach-soft);
+  --color-indigo:       var(--indigo);
+  --color-indigo-soft:  var(--indigo-soft);
 
   --radius-card: 18px;
   --radius-pill: 14px;

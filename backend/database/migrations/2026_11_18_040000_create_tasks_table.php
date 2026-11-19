@@ -16,7 +16,7 @@ return new class extends Migration
 
             // 2. Task Details from your Figma UI
             $table->string('title');                                   // Task title
-            $table->string('category');                                // Work, Personal, Health, Errands
+            $table->string('category');                                // Work, Personal, Health, Errands, School
             $table->date('due_date');                                  // Due date
             $table->time('due_time')->nullable();                      // Due time (optional)
             $table->string('priority')->default('Medium');             // Low, Medium, High

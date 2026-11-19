@@ -89,7 +89,7 @@ class AiController extends Controller
         $validated = $request->validate([
             'tasks' => ['required', 'array', 'min:1', 'max:25'],
             'tasks.*.title' => ['required', 'string', 'max:255'],
-            'tasks.*.category' => ['required', 'string', 'in:Work,Personal,Health,Errands'],
+            'tasks.*.category' => ['required', 'string', 'in:Work,Personal,Health,Errands,School'],
             'tasks.*.due_date' => ['required', 'date'],
             'tasks.*.due_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'tasks.*.start_time' => ['nullable', 'date_format:H:i,H:i:s'],

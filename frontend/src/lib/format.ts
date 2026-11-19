@@ -223,6 +223,7 @@ export const categoryStyles: Record<TaskCategory, string> = {
   Personal: 'bg-amber-soft text-amber',
   Health: 'bg-rose-soft text-rose',
   Errands: 'bg-info-soft text-info',
+  School: 'bg-indigo-soft text-indigo',
 };
 
 export const priorityStyles: Record<TaskPriority, string> = {

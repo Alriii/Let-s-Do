@@ -18,7 +18,7 @@ class UpdateTaskRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'category' => ['sometimes', 'required', 'string', 'in:Work,Personal,Health,Errands'],
+            'category' => ['sometimes', 'required', 'string', 'in:Work,Personal,Health,Errands,School'],
             'due_date' => ['sometimes', 'required', 'date'],
             'due_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'start_time' => ['nullable', 'date_format:H:i,H:i:s'],

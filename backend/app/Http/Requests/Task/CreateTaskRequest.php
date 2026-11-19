@@ -18,7 +18,7 @@ class CreateTaskRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'in:Work,Personal,Health,Errands'],
+            'category' => ['required', 'string', 'in:Work,Personal,Health,Errands,School'],
             'due_date' => ['required', 'date'],
             'due_time' => ['nullable', 'date_format:H:i,H:i:s'],
             'start_time' => ['nullable', 'date_format:H:i,H:i:s'],

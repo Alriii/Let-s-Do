@@ -20,7 +20,7 @@ class TaskController extends Controller
         private PhilippineCalendarService $calendarSvc,
     ) {}
 
-    private const CATEGORIES = ['Work', 'Personal', 'Health', 'Errands'];
+    private const CATEGORIES = ['Work', 'Personal', 'Health', 'Errands', 'School'];
     private const PRIORITIES = ['Low', 'Medium', 'High'];
     private const STATUSES = ['pending', 'completed', 'cancelled'];
 
@@ -307,7 +307,7 @@ class TaskController extends Controller
             'month'   => $month,
             'country' => $country,
             'days'    => array_values($days),
-            'count'   => count(array_filter($days, fn ($d) => $d['total'] > 0)),
+            'count'   => count(array_filter($days, fn($d) => $d['total'] > 0)),
         ], 200);
     }
 

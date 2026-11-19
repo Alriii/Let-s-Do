@@ -48,6 +48,7 @@ class DashboardController extends Controller
             'Personal' => $user->tasks()->where('category', 'Personal')->count(),
             'Health' => $user->tasks()->where('category', 'Health')->count(),
             'Errands' => $user->tasks()->where('category', 'Errands')->count(),
+            'School' => $user->tasks()->where('category', 'School')->count(),
         ];
 
         return response()->json([

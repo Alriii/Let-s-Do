@@ -95,6 +95,15 @@ class DemoUiSeeder extends Seeder
         ]);
 
         $make([
+            'title' => 'Submit HCI Research Paper & Project Review',
+            'category' => 'School',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'due_time' => '15:00',
+            'priority' => 'High',
+            'notes' => 'Review references and format as PDF.',
+        ]);
+
+        $make([
             'title' => 'Vehicle Maintenance and Oil Change',
             'category' => 'Errands',
             'due_date' => now()->addDays(5)->toDateString(),

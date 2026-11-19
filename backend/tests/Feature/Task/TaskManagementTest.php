@@ -163,3 +163,29 @@ test('user can reopen a completed or cancelled task back to pending', function (
     $this->assertNull($freshTask->completed_at);
     $this->assertNull($freshTask->cancellation_reason);
 });
+
+test('user can create and filter task with School category', function () {
+    $user = User::factory()->create();
+
+    $payload = [
+        'title' => 'Submit HCI Assignment',
+        'category' => 'School',
+        'due_date' => now()->addDays(2)->toDateString(),
+        'due_time' => '14:00',
+        'priority' => 'High',
+        'notes' => 'Submit on Google Classroom',
+    ];
+
+    $response = $this->actingAs($user, 'sanctum')
+        ->postJson('/api/v1/tasks', $payload);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('task.category', 'School');
+
+    $filterResponse = $this->actingAs($user, 'sanctum')
+        ->getJson('/api/v1/tasks?category=School');
+
+    $filterResponse->assertStatus(200)
+        ->assertJsonCount(1, 'tasks')
+        ->assertJsonPath('tasks.0.category', 'School');
+});

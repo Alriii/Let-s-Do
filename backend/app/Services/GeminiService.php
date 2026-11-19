@@ -219,7 +219,7 @@ EXTRACTION RULES:
 1. Extract distinct, actionable tasks (e.g. 'Submit Chapter 1 Draft', 'Read HCI Papers', 'Prepare Presentation Slides').
 2. For each task, deduce or estimate:
    - title: concise action-oriented title (max 60 chars)
-   - category: strictly one of ['Work', 'Personal', 'Health', 'Errands'] (use 'Work' for academic/job tasks)
+   - category: strictly one of ['Work', 'Personal', 'Health', 'Errands', 'School'] (use 'School' for academic/class/study tasks)
    - priority: strictly one of ['Low', 'Medium', 'High']
    - due_date: format 'YYYY-MM-DD'. If no year is specified, assume 2026. If relative (e.g. 'tomorrow', 'next Monday'), calculate from {$now->format('Y-m-d')}. If dates fall on a Philippine holiday, add a note in 'notes' pointing out that it is a holiday.
    - start_time: format 'HH:MM:SS' or null (e.g. '09:00:00' or '14:00:00')
@@ -346,7 +346,7 @@ SCHEDULE CREATION & CONFIRMATION PROTOCOL:
 [
   {
     "title": "Task title",
-    "category": "Health|Work|Personal|Errands",
+    "category": "Health|Work|Personal|Errands|School",
     "priority": "Low|Medium|High",
     "due_date": "YYYY-MM-DD",
     "due_time": "HH:MM",
@@ -494,7 +494,7 @@ Today's Date: {$now->format('Y-m-d')} ({$now->format('l')})
 Return strictly JSON:
 {
   \"title\": \"string (clean task title without the dates/times)\",
-  \"category\": \"Work|Personal|Health|Errands\",
+  \"category\": \"Work|Personal|Health|Errands|School\",
   \"priority\": \"Low|Medium|High\",
   \"due_date\": \"YYYY-MM-DD\",
   \"start_time\": \"HH:MM:SS\" or null,

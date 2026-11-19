@@ -28,7 +28,7 @@ class TaskFactory extends Factory
         return [
             'user_id' => User::factory(),
             'title' => fake()->sentence(3),
-            'category' => fake()->randomElement(['Work', 'Personal', 'Health', 'Errands']),
+            'category' => fake()->randomElement(['Work', 'Personal', 'Health', 'Errands', 'School']),
             'due_date' => now()->addDays(fake()->numberBetween(0, 7))->toDateString(),
             'due_time' => fake()->randomElement(['08:00', '10:30', '14:00', '17:00']),
             'priority' => fake()->randomElement(['Low', 'Medium', 'High']),
